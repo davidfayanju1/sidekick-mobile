@@ -1,16 +1,13 @@
 import '../global.css';
 import 'expo-dev-client';
 import { ThemeProvider as NavThemeProvider } from '@react-navigation/native';
-
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
-
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
 import { useDeviceContext } from 'twrnc';
-
 import { ThemeToggle } from '@/components/nativewindui/ThemeToggle';
 import { tw } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
@@ -47,11 +44,11 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="dark" backgroundColor="transparent" translucent={true} />
-
       <ActionSheetProvider>
         <NavThemeProvider value={NAV_THEME[colorScheme]}>
           <Stack screenOptions={{ animation: 'ios_from_right' }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
             <Stack.Protected guard={!SKIP_ONBOARDING}>
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
