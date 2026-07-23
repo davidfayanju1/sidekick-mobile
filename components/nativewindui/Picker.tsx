@@ -1,7 +1,7 @@
 import { Picker as RNPicker } from '@react-native-picker/picker';
 import { Platform, View } from 'react-native';
 
-import { cn } from '@/lib/cn';
+import { tw } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
 
 export function Picker<T>({
@@ -9,16 +9,19 @@ export function Picker<T>({
   style,
   dropdownIconColor,
   dropdownIconRippleColor,
-  className,
+  containerStyle,
   ...props
-}: React.ComponentProps<typeof RNPicker<T>>) {
+}: React.ComponentProps<typeof RNPicker<T>> & {
+  containerStyle?: React.ComponentProps<typeof View>['style'];
+}) {
   const { colors } = useColorScheme();
   return (
     <View
-      className={cn(
-        'ios:shadow-sm ios:shadow-black/5 rounded-md border border-background bg-background',
-        className
-      )}>
+      style={[
+        tw`ios:shadow-sm ios:shadow-black/5 rounded-md border`,
+        { borderColor: colors.background, backgroundColor: colors.background },
+        containerStyle,
+      ]}>
       <RNPicker
         mode={mode}
         style={

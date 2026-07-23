@@ -1,83 +1,112 @@
-import DateTimePicker, {
+import {
   DateTimePickerAndroid,
-  type DateTimePickerChangeEvent,
+  type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import * as React from 'react';
-import { View } from 'react-native';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Button } from '@/components/nativewindui/Button';
 import { Text } from '@/components/nativewindui/Text';
-import { cn } from '@/lib/cn';
+import { tw } from '@/lib/tw';
+import { useColorScheme } from '@/lib/useColorScheme';
+import { withOpacity } from '@/theme/with-opacity';
 
-export function DatePicker(
-  props: React.ComponentProps<typeof DateTimePicker> & {
-    mode: 'date' | 'time' | 'datetime';
-  } & {
-    materialDateClassName?: string;
-    materialDateLabel?: string;
-    materialDateLabelClassName?: string;
-    materialTimeClassName?: string;
-    materialTimeLabel?: string;
-    materialTimeLabelClassName?: string;
-  }
-) {
-  const handleValueChange =
-    props.onValueChange ??
-    ((event: DateTimePickerChangeEvent, date: Date) => {
-      props.onChange?.({ ...event, type: 'set' }, date);
-    });
+type DatePickerProps = {
+  value: Date;
+  mode: 'date' | 'time' | 'datetime';
+  minimumDate?: Date;
+  maximumDate?: Date;
+  onValueChange?: (event: DateTimePickerEvent, date?: Date) => void;
+  onChange?: (event: DateTimePickerEvent, date?: Date) => void;
+  onDismiss?: (event: DateTimePickerEvent) => void;
+  onNeutralButtonPress?: (event: DateTimePickerEvent) => void;
+  materialDateStyle?: StyleProp<ViewStyle>;
+  materialDateLabel?: string;
+  materialDateLabelStyle?: StyleProp<ViewStyle>;
+  materialTimeStyle?: StyleProp<ViewStyle>;
+  materialTimeLabel?: string;
+  materialTimeLabelStyle?: StyleProp<ViewStyle>;
+};
+
+export function DatePicker(props: DatePickerProps) {
+  const { colors } = useColorScheme();
 
   const show = (currentMode: 'time' | 'date') => () => {
     DateTimePickerAndroid.open({
       value: props.value,
-      onValueChange: handleValueChange,
-      onDismiss: props.onDismiss,
-      onNeutralButtonPress: props.onNeutralButtonPress,
       mode: currentMode,
       minimumDate: props.minimumDate,
       maximumDate: props.maximumDate,
+      onChange: (event, selectedDate) => {
+        if (event.type === 'dismissed') {
+          props.onDismiss?.(event);
+          return;
+        }
+        if (event.type === 'neutralButtonPressed') {
+          props.onNeutralButtonPress?.(event);
+          return;
+        }
+        props.onValueChange?.(event, selectedDate);
+        props.onChange?.(event, selectedDate);
+      },
     });
   };
 
   return (
-    <View className="flex-row gap-2.5">
+    <View style={tw`flex-row gap-2.5`}>
       {props.mode.includes('date') && (
-        <View className={cn('relative pt-1.5', props.materialDateClassName)}>
+        <View style={[tw`relative pt-1.5`, props.materialDateStyle]}>
           <Button
             variant="plain"
-            androidRootClassName="rounded-none"
+            androidRootStyle={tw`rounded-none`}
             onPress={show('date')}
-            className="border-foreground/30 rounded border px-2.5 py-3 active:opacity-80">
-            <Text className="py-px text-sm">
+            style={({ pressed }) => [
+              tw`rounded px-2.5 py-3`,
+              { borderWidth: 1, borderColor: withOpacity(colors.foreground, 0.3) },
+              pressed && tw`opacity-80`,
+            ]}>
+            <Text style={tw`py-px text-sm`}>
               {new Intl.DateTimeFormat('en-US', {
                 dateStyle: 'medium',
               }).format(props.value)}
             </Text>
           </Button>
           <View
-            className={cn('absolute left-2 top-0 bg-card px-1', props.materialDateLabelClassName)}>
-            <Text variant="caption2" className="text-[10px] opacity-60">
+            style={[
+              tw`absolute left-2 top-0 px-1`,
+              { backgroundColor: colors.card },
+              props.materialDateLabelStyle,
+            ]}>
+            <Text variant="caption2" style={tw`text-[10px] opacity-60`}>
               {props.materialDateLabel ?? 'Date'}
             </Text>
           </View>
         </View>
       )}
       {props.mode.includes('time') && (
-        <View className={cn('relative pt-1.5', props.materialTimeClassName)}>
+        <View style={[tw`relative pt-1.5`, props.materialTimeStyle]}>
           <Button
             variant="plain"
-            androidRootClassName="rounded-none"
+            androidRootStyle={tw`rounded-none`}
             onPress={show('time')}
-            className="border-foreground/30 rounded border px-2.5 py-3 active:opacity-80">
-            <Text className="py-px text-sm">
+            style={({ pressed }) => [
+              tw`rounded px-2.5 py-3`,
+              { borderWidth: 1, borderColor: withOpacity(colors.foreground, 0.3) },
+              pressed && tw`opacity-80`,
+            ]}>
+            <Text style={tw`py-px text-sm`}>
               {new Intl.DateTimeFormat('en-US', {
                 timeStyle: 'short',
               }).format(props.value)}
             </Text>
           </Button>
           <View
-            className={cn('absolute left-2 top-0 bg-card px-1', props.materialTimeLabelClassName)}>
-            <Text variant="caption2" className="text-[10px] opacity-60">
+            style={[
+              tw`absolute left-2 top-0 px-1`,
+              { backgroundColor: colors.card },
+              props.materialTimeLabelStyle,
+            ]}>
+            <Text variant="caption2" style={tw`text-[10px] opacity-60`}>
               {props.materialTimeLabel ?? 'Time'}
             </Text>
           </View>

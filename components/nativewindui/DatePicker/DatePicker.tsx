@@ -1,23 +1,40 @@
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import * as React from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
+
+type DatePickerProps = {
+  value: Date;
+  mode: 'date' | 'time' | 'datetime';
+  minimumDate?: Date;
+  maximumDate?: Date;
+  onValueChange?: (event: DateTimePickerEvent, date?: Date) => void;
+  onChange?: (event: DateTimePickerEvent, date?: Date) => void;
+  materialDateStyle?: StyleProp<ViewStyle>;
+  materialDateLabel?: string;
+  materialDateLabelStyle?: StyleProp<ViewStyle>;
+  materialTimeStyle?: StyleProp<ViewStyle>;
+  materialTimeLabel?: string;
+  materialTimeLabelStyle?: StyleProp<ViewStyle>;
+};
 
 export function DatePicker({
-  materialDateClassName: _materialDateClassName,
+  onValueChange,
+  onChange,
+  materialDateStyle: _materialDateStyle,
   materialDateLabel: _materialDateLabel,
-  materialDateLabelClassName: _materialDateLabelClassName,
-  materialTimeClassName: _materialTimeClassName,
+  materialDateLabelStyle: _materialDateLabelStyle,
+  materialTimeStyle: _materialTimeStyle,
   materialTimeLabel: _materialTimeLabel,
-  materialTimeLabelClassName: _materialTimeLabelClassName,
+  materialTimeLabelStyle: _materialTimeLabelStyle,
   ...props
-}: React.ComponentProps<typeof DateTimePicker> & {
-  mode: 'date' | 'time' | 'datetime';
-} & {
-  materialDateClassName?: string;
-  materialDateLabel?: string;
-  materialDateLabelClassName?: string;
-  materialTimeClassName?: string;
-  materialTimeLabel?: string;
-  materialTimeLabelClassName?: string;
-}) {
-  return <DateTimePicker {...props} />;
+}: DatePickerProps) {
+  return (
+    <DateTimePicker
+      {...props}
+      onChange={(event, date) => {
+        onValueChange?.(event, date);
+        onChange?.(event, date);
+      }}
+    />
+  );
 }

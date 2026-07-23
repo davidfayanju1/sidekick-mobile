@@ -1,29 +1,30 @@
 import * as AvatarPrimitive from '@rn-primitives/avatar';
 
-import { cn } from '@/lib/cn';
+import { tw } from '@/lib/tw';
+import { useColorScheme } from '@/lib/useColorScheme';
 
-function Avatar({ className, ...props }: AvatarPrimitive.RootProps) {
+function Avatar({ style, ...props }: AvatarPrimitive.RootProps) {
   return (
     <AvatarPrimitive.Root
-      className={cn('relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full', className)}
+      style={[tw`relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full`, style]}
       {...props}
     />
   );
 }
 
-function AvatarImage({ className, ...props }: AvatarPrimitive.ImageProps) {
-  return (
-    <AvatarPrimitive.Image className={cn('aspect-square h-full w-full', className)} {...props} />
-  );
+function AvatarImage({ style, ...props }: AvatarPrimitive.ImageProps) {
+  return <AvatarPrimitive.Image style={[tw`aspect-square h-full w-full`, style]} {...props} />;
 }
 
-function AvatarFallback({ className, ...props }: AvatarPrimitive.FallbackProps) {
+function AvatarFallback({ style, ...props }: AvatarPrimitive.FallbackProps) {
+  const { colors } = useColorScheme();
   return (
     <AvatarPrimitive.Fallback
-      className={cn(
-        'flex h-full w-full items-center justify-center rounded-full bg-muted',
-        className
-      )}
+      style={[
+        tw`h-full w-full items-center justify-center rounded-full`,
+        { backgroundColor: colors.muted },
+        style,
+      ]}
       {...props}
     />
   );

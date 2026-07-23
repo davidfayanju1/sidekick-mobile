@@ -1,8 +1,8 @@
-import { Theme, DefaultTheme, DarkTheme } from 'expo-router/react-navigation';
+import { DefaultTheme, DarkTheme } from '@react-navigation/native';
 
 import { COLORS } from './colors';
 
-const NAV_THEME: { light: Theme; dark: Theme } = {
+const NAV_THEME: { light: ReactNavigation.Theme; dark: ReactNavigation.Theme } = {
   light: {
     dark: false,
     colors: {

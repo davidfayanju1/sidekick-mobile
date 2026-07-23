@@ -1,22 +1,24 @@
 import * as Slot from '@rn-primitives/slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { Platform, Pressable, PressableProps, View, ViewStyle } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  PressableProps,
+  PressableStateCallbackType,
+  StyleProp,
+  TextStyle,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 import { TextClassContext } from '@/components/nativewindui/Text';
-import { cn } from '@/lib/cn';
+import { tw } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
 import { COLORS } from '@/theme/colors';
 import { withOpacity } from '@/theme/with-opacity';
 
-const buttonVariants = cva('flex-row items-center justify-center gap-2', {
+const buttonSizeVariants = cva('flex-row items-center justify-center gap-2', {
   variants: {
-    variant: {
-      primary: 'ios:active:opacity-80 bg-primary',
-      secondary: 'ios:border-primary ios:active:bg-primary/5 border border-foreground/40',
-      tonal:
-        'ios:bg-primary/10 dark:ios:bg-primary/10 ios:active:bg-primary/15 bg-primary/15 dark:bg-primary/30',
-      plain: 'ios:active:opacity-70',
-    },
     size: {
       none: '',
       sm: 'py-1 px-2.5 rounded-full',
@@ -26,7 +28,6 @@ const buttonVariants = cva('flex-row items-center justify-center gap-2', {
     },
   },
   defaultVariants: {
-    variant: 'primary',
     size: 'md',
   },
 });
@@ -46,14 +47,8 @@ const androidRootVariants = cva('overflow-hidden', {
   },
 });
 
-const buttonTextVariants = cva('font-medium', {
+const buttonTextSizeVariants = cva('font-medium', {
   variants: {
-    variant: {
-      primary: 'text-white',
-      secondary: 'ios:text-primary text-foreground',
-      tonal: 'ios:text-primary text-foreground',
-      plain: 'text-foreground',
-    },
     size: {
       none: '',
       icon: '',
@@ -63,7 +58,6 @@ const buttonTextVariants = cva('font-medium', {
     },
   },
   defaultVariants: {
-    variant: 'primary',
     size: 'md',
   },
 });
@@ -83,52 +77,94 @@ const ANDROID_RIPPLE = {
   },
 };
 
-// Add as class when possible: https://github.com/marklawlor/nativewind/issues/522
 const BORDER_CURVE: ViewStyle = {
   borderCurve: 'continuous',
 };
 
-type ButtonVariantProps = Omit<VariantProps<typeof buttonVariants>, 'variant'> & {
-  variant?: Exclude<VariantProps<typeof buttonVariants>['variant'], null>;
+type ButtonVariant = 'primary' | 'secondary' | 'tonal' | 'plain';
+
+type ButtonThemeColors = { primary: string; foreground: string };
+
+function getButtonVariantStyle(
+  variant: ButtonVariant,
+  colors: ButtonThemeColors,
+  isDarkColorScheme: boolean,
+  pressed: boolean
+): ViewStyle {
+  const isIOS = Platform.OS === 'ios';
+  switch (variant) {
+    case 'primary':
+      return {
+        backgroundColor: colors.primary,
+        ...(isIOS && pressed ? { opacity: 0.8 } : null),
+      };
+    case 'secondary':
+      return {
+        borderWidth: 1,
+        borderColor: isIOS ? colors.primary : withOpacity(colors.foreground, 0.4),
+        ...(isIOS && pressed ? { backgroundColor: withOpacity(colors.primary, 0.05) } : null),
+      };
+    case 'tonal': {
+      const baseOpacity = isIOS ? 0.1 : isDarkColorScheme ? 0.3 : 0.15;
+      const pressedOpacity = isIOS ? 0.15 : baseOpacity;
+      return {
+        backgroundColor: withOpacity(colors.primary, pressed ? pressedOpacity : baseOpacity),
+      };
+    }
+    case 'plain':
+      return isIOS && pressed ? { opacity: 0.7 } : {};
+  }
+}
+
+function getButtonTextStyle(variant: ButtonVariant, colors: ButtonThemeColors): TextStyle {
+  const isIOS = Platform.OS === 'ios';
+  switch (variant) {
+    case 'primary':
+      return { color: COLORS.white };
+    case 'secondary':
+    case 'tonal':
+      return { color: isIOS ? colors.primary : colors.foreground };
+    case 'plain':
+      return { color: colors.foreground };
+  }
+}
+
+type ButtonVariantProps = Omit<VariantProps<typeof buttonSizeVariants>, never> & {
+  variant?: ButtonVariant;
 };
 
 type AndroidOnlyButtonProps = {
   /**
-   * ANDROID ONLY: The class name of root responsible for hidding the ripple overflow.
+   * ANDROID ONLY: extra style for the root responsible for hiding the ripple overflow.
    */
-  androidRootClassName?: string;
+  androidRootStyle?: StyleProp<ViewStyle>;
 };
 
 type ButtonProps = PressableProps & ButtonVariantProps & AndroidOnlyButtonProps;
 
 const Root = Platform.OS === 'android' ? View : Slot.Pressable;
 
-function Button({
-  className,
-  variant = 'primary',
-  size,
-  style = BORDER_CURVE,
-  androidRootClassName,
-  ...props
-}: ButtonProps) {
-  const { colorScheme } = useColorScheme();
+function Button({ variant = 'primary', size, style, androidRootStyle, ...props }: ButtonProps) {
+  const { colorScheme, colors, isDarkColorScheme } = useColorScheme();
+
+  const textStyle = tw.style(buttonTextSizeVariants({ size }), getButtonTextStyle(variant, colors));
 
   return (
-    <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
+    <TextClassContext.Provider value={textStyle}>
       <Root
-        className={Platform.select({
-          ios: undefined,
-          default: androidRootVariants({
-            size,
-            className: androidRootClassName,
-          }),
-        })}>
+        style={
+          Platform.OS === 'android'
+            ? [tw.style(androidRootVariants({ size })), androidRootStyle]
+            : undefined
+        }>
         <Pressable
-          className={cn(
-            props.disabled && 'opacity-50',
-            buttonVariants({ variant, size, className })
-          )}
-          style={style}
+          style={(state: PressableStateCallbackType) => [
+            tw.style(buttonSizeVariants({ size })),
+            getButtonVariantStyle(variant, colors, isDarkColorScheme, state.pressed),
+            props.disabled && { opacity: 0.5 },
+            BORDER_CURVE,
+            typeof style === 'function' ? style(state) : style,
+          ]}
           android_ripple={ANDROID_RIPPLE[colorScheme][variant]}
           {...props}
         />
@@ -137,5 +173,5 @@ function Button({
   );
 }
 
-export { Button, buttonTextVariants, buttonVariants };
+export { Button, getButtonTextStyle, getButtonVariantStyle };
 export type { ButtonProps };

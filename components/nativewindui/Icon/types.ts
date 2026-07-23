@@ -13,7 +13,6 @@ type Style = SymbolIconProps['style'] &
 
 type IconProps = IconMapper<SymbolIconProps, MaterialIconsProps, MaterialCommunityIconsProps> & {
   style?: Style;
-  className?: string;
 };
 
 export type { IconProps };

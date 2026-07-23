@@ -7,7 +7,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { cn } from '@/lib/cn';
+import { tw } from '@/lib/tw';
+import { useColorScheme } from '@/lib/useColorScheme';
 
 const DEFAULT_MAX = 100;
 
@@ -15,7 +16,7 @@ function ProgressIndicator({
   value: valueProp,
   max: maxProp,
   getValueLabel = defaultGetValueLabel,
-  className,
+  style,
   children,
   ...props
 }: ViewProps & {
@@ -23,6 +24,7 @@ function ProgressIndicator({
   max?: number;
   getValueLabel?: (value: number, max: number) => string;
 }) {
+  const { colors } = useColorScheme();
   const max = maxProp ?? DEFAULT_MAX;
   const value = isValidValueNumber(valueProp, max) ? valueProp : 0;
   const progress = useDerivedValue(() => value ?? 0);
@@ -49,10 +51,18 @@ function ProgressIndicator({
         now: value,
         text: getValueLabel(value, max),
       }}
-      className={cn('relative h-1 w-full overflow-hidden rounded-full', className)}
+      style={[tw`relative h-1 w-full overflow-hidden rounded-full`, style]}
       {...props}>
-      <View className="absolute bottom-0 left-0 right-0 top-0 bg-muted opacity-20" />
-      <Animated.View role="presentation" style={indicator} className={cn('h-full bg-primary')} />
+      <View
+        style={[
+          tw`absolute bottom-0 left-0 right-0 top-0 opacity-20`,
+          { backgroundColor: colors.muted },
+        ]}
+      />
+      <Animated.View
+        role="presentation"
+        style={[indicator, tw`h-full`, { backgroundColor: colors.primary }]}
+      />
     </View>
   );
 }

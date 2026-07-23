@@ -1,13 +1,13 @@
 import { VariantProps, cva } from 'class-variance-authority';
-import { cssInterop } from 'nativewind';
 import * as React from 'react';
+import type { StyleProp, TextStyle } from 'react-native';
 import { UITextView } from 'react-native-uitextview';
 
-import { cn } from '@/lib/cn';
+import { tw } from '@/lib/tw';
+import { useColorScheme } from '@/lib/useColorScheme';
+import { withOpacity } from '@/theme/with-opacity';
 
-cssInterop(UITextView, { className: 'style' });
-
-const textVariants = cva('text-foreground', {
+const textVariants = cva('', {
   variants: {
     variant: {
       largeTitle: 'text-4xl',
@@ -22,31 +22,40 @@ const textVariants = cva('text-foreground', {
       caption1: 'text-xs',
       caption2: 'text-[11px] leading-4',
     },
-    color: {
-      primary: '',
-      secondary: 'text-secondary-foreground/90',
-      tertiary: 'text-muted-foreground/90',
-      quarternary: 'text-muted-foreground/50',
-    },
   },
   defaultVariants: {
     variant: 'body',
-    color: 'primary',
   },
 });
 
-const TextClassContext = React.createContext<string | undefined>(undefined);
+type TextColor = 'primary' | 'secondary' | 'tertiary' | 'quarternary';
+
+const TextClassContext = React.createContext<StyleProp<TextStyle> | undefined>(undefined);
 
 function Text({
-  className,
+  style,
   variant,
-  color,
+  color = 'primary',
   ...props
-}: React.ComponentProps<typeof UITextView> & VariantProps<typeof textVariants>) {
-  const textClassName = React.useContext(TextClassContext);
+}: React.ComponentProps<typeof UITextView> &
+  VariantProps<typeof textVariants> & { color?: TextColor }) {
+  const contextStyle = React.useContext(TextClassContext);
+  const { colors } = useColorScheme();
+
+  const colorStyle: TextStyle = {
+    color:
+      color === 'secondary'
+        ? withOpacity(colors.secondaryForeground, 0.9)
+        : color === 'tertiary'
+          ? withOpacity(colors.mutedForeground, 0.9)
+          : color === 'quarternary'
+            ? withOpacity(colors.mutedForeground, 0.5)
+            : colors.foreground,
+  };
+
   return (
     <UITextView
-      className={cn(textVariants({ variant, color }), textClassName, className)}
+      style={[tw.style(textVariants({ variant })), colorStyle, contextStyle, style]}
       {...props}
     />
   );
