@@ -1,15 +1,18 @@
-import { ChevronRight } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { ChevronRight, TriangleAlert } from 'lucide-react-native';
 import * as React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import RoleSelectSheet from '@/components/UI/RoleSelectSheet';
 import Text from '@/components/UI/Text';
 import { ConfirmTaskSheet, DisputeSheet, ReviewOffersSheet } from '@/components/UI/TaskSheets';
-import { tw } from '@/lib/tw';
+import { tw, twColor } from '@/lib/tw';
+import { useColorScheme } from '@/lib/useColorScheme';
+import { useOutstandingStepsCount, useRoleStore, type UserRole } from '@/store/roleStore';
 
 const ACCENT_TEAL = '#489A9F';
 const CATEGORY_COLOR = '#D1573B';
-const MUTED = '#9AA0A6';
 
 const CARD_SHADOW = {
   shadowColor: '#000',
@@ -103,6 +106,9 @@ function StatusPill({ status, label }: { status: TaskStatus; label: string }) {
 }
 
 function ProgressTracker({ currentStep }: { currentStep: number }) {
+  const { colors } = useColorScheme();
+  const muted = twColor(colors.mutedForeground);
+
   return (
     <View style={tw`mt-3`}>
       <View style={tw`flex-row items-center`}>
@@ -114,8 +120,8 @@ function ProgressTracker({ currentStep }: { currentStep: number }) {
                 index < currentStep
                   ? { backgroundColor: ACCENT_TEAL }
                   : index === currentStep
-                    ? { borderWidth: 2, borderColor: ACCENT_TEAL, backgroundColor: 'white' }
-                    : { borderWidth: 1.5, borderColor: '#D9DCE0', backgroundColor: 'white' },
+                    ? { borderWidth: 2, borderColor: ACCENT_TEAL, backgroundColor: colors.card }
+                    : { borderWidth: 1.5, borderColor: colors.grey4, backgroundColor: colors.card },
               ]}>
               {index < currentStep ? (
                 <View style={tw`h-1.5 w-1.5 rounded-full bg-white`} />
@@ -127,7 +133,7 @@ function ProgressTracker({ currentStep }: { currentStep: number }) {
               <View
                 style={[
                   tw`h-px flex-1`,
-                  { backgroundColor: index < currentStep ? ACCENT_TEAL : '#D9DCE0' },
+                  { backgroundColor: index < currentStep ? ACCENT_TEAL : colors.grey4 },
                 ]}
               />
             )}
@@ -136,7 +142,7 @@ function ProgressTracker({ currentStep }: { currentStep: number }) {
       </View>
       <View style={tw`mt-1 flex-row`}>
         {STEPS.map((label) => (
-          <Text key={label} fontSize={9} classN="w-11 text-center text-[#9AA0A6]">
+          <Text key={label} fontSize={9} classN={`w-11 text-center text-[${muted}]`}>
             {label}
           </Text>
         ))}
@@ -146,11 +152,15 @@ function ProgressTracker({ currentStep }: { currentStep: number }) {
 }
 
 function TaskCard({ task, onPress }: { task: Task; onPress?: () => void }) {
+  const { colors } = useColorScheme();
+  const fg = twColor(colors.foreground);
+  const muted = twColor(colors.mutedForeground);
+
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      style={[tw`mt-4 rounded-2xl bg-white p-4`, CARD_SHADOW]}>
+      style={[tw`mt-4 rounded-2xl p-4`, { backgroundColor: colors.card }, CARD_SHADOW]}>
       <View style={tw`flex-row items-center justify-between`}>
         <Text fontWeight="bold" fontSize={11} classN={`text-[${CATEGORY_COLOR}]`}>
           {task.category.toUpperCase()}
@@ -158,10 +168,10 @@ function TaskCard({ task, onPress }: { task: Task; onPress?: () => void }) {
         <StatusPill status={task.status} label={task.statusLabel} />
       </View>
 
-      <Text fontWeight="bold" fontSize={16} classN="mt-1 text-black">
+      <Text fontWeight="bold" fontSize={16} classN={`mt-1 text-[${fg}]`}>
         {task.title}
       </Text>
-      <Text fontSize={12} classN="mt-0.5 text-[#9AA0A6]">
+      <Text fontSize={12} classN={`mt-0.5 text-[${muted}]`}>
         {task.meta}
       </Text>
 
@@ -187,12 +197,12 @@ function TaskCard({ task, onPress }: { task: Task; onPress?: () => void }) {
         <View
           style={[
             tw`mt-3 flex-row items-center justify-between pt-3`,
-            { borderTopWidth: 1, borderTopColor: '#F0F1F2' },
+            { borderTopWidth: 1, borderTopColor: colors.grey5 },
           ]}>
           <Text fontSize={12} classN="text-[#D97A55]">
             {task.payIn}
           </Text>
-          <Text fontWeight="bold" fontSize={15} classN="text-black">
+          <Text fontWeight="bold" fontSize={15} classN={`text-[${fg}]`}>
             {task.price}
           </Text>
         </View>
@@ -202,11 +212,16 @@ function TaskCard({ task, onPress }: { task: Task; onPress?: () => void }) {
 }
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = React.useState<'posted' | 'mine'>('posted');
+  const { role, hasChosenRole, setRole } = useRoleStore();
+  const outstandingSteps = useOutstandingStepsCount();
+  const { colors } = useColorScheme();
   const [activeSheet, setActiveSheet] = React.useState<'confirm' | 'dispute' | 'offers' | null>(
     null
   );
-  const tasks = activeTab === 'posted' ? POSTED_TASKS : [];
+  const isSidekick = role === 'sidekick';
+  const fg = twColor(colors.foreground);
+  const muted = twColor(colors.mutedForeground);
+  const tasks = isSidekick ? [] : POSTED_TASKS;
 
   const confirmTask = POSTED_TASKS.find((task) => task.status === 'in_progress');
   const offersTask = POSTED_TASKS.find((task) => task.status === 'offers');
@@ -216,8 +231,13 @@ export default function Dashboard() {
     if (task.status === 'offers') setActiveSheet('offers');
   };
 
+  const handleRoleSelect = (selectedRole: UserRole) => {
+    setRole(selectedRole);
+    router.push('/get-started');
+  };
+
   return (
-    <SafeAreaView style={tw`flex-1 bg-[#FFFFFF]`}>
+    <SafeAreaView style={[tw`flex-1`, { backgroundColor: colors.background }]}>
       <View style={tw`flex-row items-center justify-between px-4 pt-2`}>
         <Pressable style={tw`flex-row items-center gap-2`}>
           <View
@@ -231,12 +251,12 @@ export default function Dashboard() {
           </View>
           <View>
             <View style={tw`flex-row items-center`}>
-              <Text fontWeight="bold" fontSize={15} classN="text-black">
+              <Text fontWeight="bold" fontSize={15} classN={`text-[${fg}]`}>
                 Bisola Soks
               </Text>
-              <ChevronRight size={16} color={MUTED} />
+              <ChevronRight size={16} color={colors.mutedForeground} />
             </View>
-            <Text fontSize={12} classN="text-[#9AA0A6]">
+            <Text fontSize={12} classN={`text-[${muted}]`}>
               Lagos Island
             </Text>
           </View>
@@ -248,39 +268,30 @@ export default function Dashboard() {
             ...tw`h-9 w-9 items-center justify-center rounded-full border`,
           }}>
           <Text fontWeight="bold" fontSize={13} classN={`text-[${ACCENT_TEAL}]`}>
-            H
+            {isSidekick ? 'S' : 'H'}
           </Text>
         </View>
       </View>
 
-      <View style={[tw`mx-4 mt-4 flex-row rounded-[15px] p-1`, { backgroundColor: '#E7E9EB' }]}>
+      <Text fontWeight="bold" fontSize={16} classN={`mx-4 mt-5 text-[${fg}]`}>
+        {isSidekick ? 'My Tasks' : 'My Posted Tasks'}
+      </Text>
+
+      {hasChosenRole && outstandingSteps > 0 && (
         <Pressable
-          onPress={() => setActiveTab('posted')}
+          onPress={() => router.push('/get-started')}
           style={[
-            tw`flex-1 items-center rounded-[10px] py-2`,
-            activeTab === 'posted' && { backgroundColor: ACCENT_TEAL },
+            tw`mx-4 mt-3 flex-row items-center gap-3 rounded-2xl p-3.5`,
+            { backgroundColor: '#F5E6D3' },
           ]}>
-          <Text
-            fontWeight="medium"
-            fontSize={13}
-            classN={activeTab === 'posted' ? 'text-white' : 'text-[#6B7075]'}>
-            My Posted Tasks
+          <TriangleAlert size={18} color="#B5762E" />
+          <Text fontWeight="medium" fontSize={13} classN="flex-1 text-[#B5762E]">
+            {outstandingSteps} step{outstandingSteps > 1 ? 's' : ''} left to finish setting up your{' '}
+            {isSidekick ? 'Sidekick' : 'Hero'} account
           </Text>
+          <ChevronRight size={16} color="#B5762E" />
         </Pressable>
-        <Pressable
-          onPress={() => setActiveTab('mine')}
-          style={[
-            tw`flex-1 items-center rounded-[10px] py-2`,
-            activeTab === 'mine' && { backgroundColor: ACCENT_TEAL },
-          ]}>
-          <Text
-            fontWeight="medium"
-            fontSize={13}
-            classN={activeTab === 'mine' ? 'text-white' : 'text-[#6B7075]'}>
-            My Tasks
-          </Text>
-        </Pressable>
-      </View>
+      )}
 
       <ScrollView
         style={tw`flex-1 px-4`}
@@ -288,8 +299,8 @@ export default function Dashboard() {
         showsVerticalScrollIndicator={false}>
         {tasks.length === 0 ? (
           <View style={tw`mt-16 items-center`}>
-            <Text fontSize={14} classN="text-[#9AA0A6]">
-              No tasks yet
+            <Text fontSize={14} classN={`text-[${muted}]`}>
+              {isSidekick ? 'No active tasks yet' : 'No tasks yet'}
             </Text>
           </View>
         ) : (
@@ -323,6 +334,8 @@ export default function Dashboard() {
           offerCount={offersTask.offerCount}
         />
       )}
+
+      <RoleSelectSheet visible={!hasChosenRole} onSelect={handleRoleSelect} />
     </SafeAreaView>
   );
 }

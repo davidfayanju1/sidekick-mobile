@@ -1,8 +1,17 @@
 import React from 'react';
-import { Animated, Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, View } from 'react-native';
+import {
+  Animated,
+  Dimensions,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { tw } from '@/lib/tw';
+import { useColorScheme } from '@/lib/useColorScheme';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -13,6 +22,7 @@ interface BottomSheetProps {
 }
 
 export default function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
+  const { colors } = useColorScheme();
   const translateY = React.useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const backdropOpacity = React.useRef(new Animated.Value(0)).current;
   const [rendered, setRendered] = React.useState(visible);
@@ -33,7 +43,11 @@ export default function BottomSheet({ visible, onClose, children }: BottomSheetP
     } else {
       Animated.parallel([
         Animated.timing(backdropOpacity, { toValue: 0, duration: 180, useNativeDriver: true }),
-        Animated.timing(translateY, { toValue: SCREEN_HEIGHT, duration: 200, useNativeDriver: true }),
+        Animated.timing(translateY, {
+          toValue: SCREEN_HEIGHT,
+          duration: 200,
+          useNativeDriver: true,
+        }),
       ]).start(({ finished }) => {
         if (finished) setRendered(false);
       });
@@ -47,7 +61,10 @@ export default function BottomSheet({ visible, onClose, children }: BottomSheetP
       <View style={tw`flex-1`}>
         <Pressable style={tw`absolute top-0 bottom-0 left-0 right-0`} onPress={onClose}>
           <Animated.View
-            style={[tw`flex-1`, { backgroundColor: 'rgba(15,20,24,0.55)', opacity: backdropOpacity }]}
+            style={[
+              tw`flex-1`,
+              { backgroundColor: 'rgba(15,20,24,0.55)', opacity: backdropOpacity },
+            ]}
           />
         </Pressable>
 
@@ -56,11 +73,13 @@ export default function BottomSheet({ visible, onClose, children }: BottomSheetP
           style={tw`mt-auto`}
           pointerEvents="box-none">
           <Animated.View style={{ transform: [{ translateY }] }}>
-            <View style={tw`rounded-t-[28px] bg-white px-5 pt-3`}>
-              <View style={tw`h-1 w-10 self-center rounded-full bg-[#E1E4EA]`} />
+            <View style={[tw`rounded-t-[28px] px-5 pt-3`, { backgroundColor: colors.card }]}>
+              <View
+                style={[tw`h-1 w-10 self-center rounded-full`, { backgroundColor: colors.grey4 }]}
+              />
               <View style={tw`pb-2 pt-4`}>{children}</View>
             </View>
-            <SafeAreaView edges={['bottom']} style={tw`bg-white`} />
+            <SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.card }} />
           </Animated.View>
         </KeyboardAvoidingView>
       </View>

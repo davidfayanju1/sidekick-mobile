@@ -23,11 +23,9 @@ const ICONS: Record<string, { Icon: React.ComponentType; ActiveIcon: React.Compo
   profile: { Icon: ProfileTabIcon, ActiveIcon: ProfileActiveTabIcon },
 };
 
-interface TabBarProps extends BottomTabBarProps {
-  onProfilePress?: () => void;
-}
+type TabBarProps = BottomTabBarProps;
 
-export function TabBar({ state, descriptors, navigation, onProfilePress }: TabBarProps) {
+export function TabBar({ state, descriptors, navigation }: TabBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -52,11 +50,6 @@ export function TabBar({ state, descriptors, navigation, onProfilePress }: TabBa
           const label = descriptors[route.key]?.options.title ?? route.name;
 
           function onPress() {
-            if (route.name === 'profile') {
-              onProfilePress?.();
-              return;
-            }
-
             const event = navigation.emit({
               type: 'tabPress',
               target: route.key,

@@ -1,4 +1,4 @@
-import { BadgeCheck, Image as ImageIcon, Star } from 'lucide-react-native';
+import { BadgeCheck, Check, Image as ImageIcon, Star } from 'lucide-react-native';
 import React from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 
@@ -80,7 +80,10 @@ export function ConfirmTaskSheet({
           { borderWidth: 1, borderColor: BORDER },
         ]}>
         <View
-          style={[tw`h-11 w-11 items-center justify-center rounded-xl`, { backgroundColor: SURFACE }]}>
+          style={[
+            tw`h-11 w-11 items-center justify-center rounded-xl`,
+            { backgroundColor: SURFACE },
+          ]}>
           <ImageIcon size={20} color={BODY} />
         </View>
         <View style={tw`flex-1`}>
@@ -102,10 +105,22 @@ export function ConfirmTaskSheet({
 }
 
 const DISPUTE_REASONS = [
-  { id: 'not_completed', title: 'Task not completed', description: "Sidekick didn't finish the work" },
-  { id: 'poor_quality', title: 'Work quality is poor', description: 'Job done but not to standard' },
+  {
+    id: 'not_completed',
+    title: 'Task not completed',
+    description: "Sidekick didn't finish the work",
+  },
+  {
+    id: 'poor_quality',
+    title: 'Work quality is poor',
+    description: 'Job done but not to standard',
+  },
   { id: 'no_show', title: 'Sidekick no-showed', description: 'Accepted but never arrived' },
-  { id: 'safety', title: 'Safety Concern', description: 'Report aggressive or suspicious behaviour' },
+  {
+    id: 'safety',
+    title: 'Safety Concern',
+    description: 'Report aggressive or suspicious behaviour',
+  },
 ] as const;
 
 interface DisputeSheetProps {
@@ -134,7 +149,10 @@ export function DisputeSheet({ visible, onClose, onSubmit }: DisputeSheetProps) 
             <Pressable
               key={reason.id}
               onPress={() => setSelected(reason.id)}
-              style={[tw`mt-3 flex-row items-start gap-3 rounded-2xl p-4`, { backgroundColor: SURFACE }]}>
+              style={[
+                tw`mt-3 flex-row items-start gap-3 rounded-2xl p-4`,
+                { backgroundColor: SURFACE },
+              ]}>
               <View
                 style={[
                   tw`mt-0.5 h-5 w-5 items-center justify-center rounded-full`,
@@ -400,6 +418,157 @@ export function ReviewOffersSheet({
 
       <View style={tw`mt-4`}>
         <OutlineButton label="Close" onPress={onClose} />
+      </View>
+    </BottomSheet>
+  );
+}
+
+const SUMMARY_TINT = '#EAF5F5';
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={tw`flex-row items-center justify-between py-2`}>
+      <Text fontSize={13} classN="text-[#6B7075]">
+        {label}
+      </Text>
+      <Text fontWeight="bold" fontSize={13} classN="text-black">
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+interface TaskSummarySheetProps {
+  visible: boolean;
+  onClose: () => void;
+  onContinue: () => void;
+  category: string;
+  location: string;
+  price: string;
+  date: string;
+  time: string;
+}
+
+export function TaskSummarySheet({
+  visible,
+  onClose,
+  onContinue,
+  category,
+  location,
+  price,
+  date,
+  time,
+}: TaskSummarySheetProps) {
+  return (
+    <BottomSheet visible={visible} onClose={onClose}>
+      <Text fontWeight="black" fontSize={20} classN="text-black">
+        Task Summary
+      </Text>
+
+      <View style={[tw`mt-4 rounded-2xl px-4 py-1`, { backgroundColor: SUMMARY_TINT }]}>
+        <SummaryRow label="Category" value={category} />
+        <SummaryRow label="Location" value={location} />
+        <SummaryRow label="Price" value={price} />
+        <SummaryRow label="Date" value={date} />
+        <SummaryRow label="Time" value={time} />
+      </View>
+
+      <View style={tw`mt-5 gap-3`}>
+        <PrimaryButton label="Continue to escrow payment" onPress={onContinue} />
+        <OutlineButton label="Back" onPress={onClose} />
+      </View>
+    </BottomSheet>
+  );
+}
+
+interface EscrowPaymentSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  onPay: () => void;
+  budget: number;
+  platformFee: number;
+}
+
+function formatNaira(amount: number) {
+  return `₦${Math.round(amount).toLocaleString('en-US')}`;
+}
+
+export function EscrowPaymentSheet({
+  visible,
+  onClose,
+  onPay,
+  budget,
+  platformFee,
+}: EscrowPaymentSheetProps) {
+  const total = budget + platformFee;
+
+  return (
+    <BottomSheet visible={visible} onClose={onClose}>
+      <Text fontWeight="black" fontSize={20} classN="text-black">
+        Fund escrow to post
+      </Text>
+      <Text fontSize={13} classN="mt-1.5 text-[#6B7075]">
+        Held safely until you confirm the task is done. Released only on your approval.
+      </Text>
+
+      <View style={tw`mt-4`}>
+        <SummaryRow label="Task Budget" value={formatNaira(budget)} />
+        <SummaryRow label="Platform fee (%)" value={formatNaira(platformFee)} />
+        <View
+          style={[
+            tw`mt-1 flex-row items-center justify-between pt-3`,
+            { borderTopWidth: 1, borderTopColor: BORDER },
+          ]}>
+          <Text fontWeight="bold" fontSize={14} classN="text-black">
+            Total
+          </Text>
+          <Text fontWeight="bold" fontSize={14} classN="text-black">
+            {formatNaira(total)}
+          </Text>
+        </View>
+      </View>
+
+      <View style={[tw`mt-4 rounded-xl px-3 py-2.5`, { backgroundColor: SUMMARY_TINT }]}>
+        <Text fontSize={12} classN="text-[#3F7A7D]">
+          Full refund if no Sidekick is matched within 24 hours.
+        </Text>
+      </View>
+
+      <View style={tw`mt-5 gap-3`}>
+        <PrimaryButton label={`Pay ${formatNaira(total)} via Paystack`} onPress={onPay} />
+        <OutlineButton label="Back" onPress={onClose} />
+      </View>
+    </BottomSheet>
+  );
+}
+
+interface PaymentSuccessSheetProps {
+  visible: boolean;
+  onBackHome: () => void;
+}
+
+export function PaymentSuccessSheet({ visible, onBackHome }: PaymentSuccessSheetProps) {
+  return (
+    <BottomSheet visible={visible} onClose={onBackHome}>
+      <View style={tw`items-center px-2 py-2`}>
+        <View
+          style={[
+            tw`h-16 w-16 items-center justify-center rounded-full`,
+            { backgroundColor: '#2F9E56' },
+          ]}>
+          <Check size={32} color="white" strokeWidth={3} />
+        </View>
+
+        <Text fontWeight="black" fontSize={19} classN="mt-4 text-black">
+          Success
+        </Text>
+        <Text fontSize={13} classN="mt-1.5 text-center text-[#6B7075]">
+          You have successfully sent money into your Escrow Wallet
+        </Text>
+
+        <View style={tw`mt-5 w-full`}>
+          <PrimaryButton label="Back Home" onPress={onBackHome} />
+        </View>
       </View>
     </BottomSheet>
   );
