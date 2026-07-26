@@ -4,15 +4,18 @@ import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
   Calendar,
   Check,
   ChevronDown,
   ChevronLeft,
+  ClipboardList,
+  Heart,
   Image as ImageIcon,
   ImageOff,
   Upload,
+  X,
 } from 'lucide-react-native';
 import * as React from 'react';
 import { Image, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
@@ -25,7 +28,13 @@ import {
   PaymentSuccessSheet,
   TaskSummarySheet,
 } from '@/components/UI/TaskSheets';
-import { tw } from '@/lib/tw';
+import { browsableToTask, type BrowsableTask } from '@/components/UI/TaskParts';
+import { TaskSwipeCard, type TaskSwipeCardHandle } from '@/components/UI/TaskSwipeCard';
+import { tw, twColor } from '@/lib/tw';
+import { useColorScheme } from '@/lib/useColorScheme';
+import { useRoleStore } from '@/store/roleStore';
+import { useTaskStore } from '@/store/taskStore';
+import { withOpacity } from '@/theme/with-opacity';
 
 const ACCENT_TEAL = '#489A9F';
 const BORDER = '#DADADA';
@@ -33,6 +42,70 @@ const MUTED = '#9AA0A6';
 const WARNING = '#D97A55';
 const MAX_PHOTOS = 3;
 const PLATFORM_FEE_PERCENT = 0.5;
+const REJECT_COLOR = '#D1573B';
+
+const AVAILABLE_TASKS: BrowsableTask[] = [
+  {
+    id: 'a1',
+    category: 'Cleaning',
+    title: 'Weekly apartment cleaning',
+    description:
+      'Need a thorough clean of a 3-bedroom flat — kitchen, bathrooms, and living areas. Cleaning supplies provided.',
+    budget: '₦18,000',
+    location: 'Ikoyi',
+    distanceLabel: '1.2km away',
+    postedAgo: 'Posted 20 mins ago',
+    etaWindow: '2 - 3 hrs',
+    heroName: 'Chiamaka N.',
+    heroInitial: 'C',
+    heroRating: 5,
+  },
+  {
+    id: 'a2',
+    category: 'Delivery',
+    title: 'Pick up documents from Ikeja',
+    description:
+      'Need someone to pick up signed documents from an office in Ikeja and drop them off in Victoria Island by 4pm today.',
+    budget: '₦6,500',
+    location: 'Ikeja → Victoria Island',
+    distanceLabel: '3.4km away',
+    postedAgo: 'Posted 5 mins ago',
+    etaWindow: '45 mins - 1 hr',
+    heroName: 'Tobi A.',
+    heroInitial: 'T',
+    heroRating: 4,
+  },
+  {
+    id: 'a3',
+    category: 'Tech Help',
+    title: 'Set up new WiFi router',
+    description:
+      'Bought a new router and need help setting it up and connecting all devices in the house.',
+    budget: '₦8,000',
+    location: 'Lekki Phase 1',
+    distanceLabel: '900m away',
+    postedAgo: 'Posted 1 hr ago',
+    etaWindow: '30 - 45 mins',
+    heroName: 'Femi O.',
+    heroInitial: 'F',
+    heroRating: 5,
+  },
+  {
+    id: 'a4',
+    category: 'Handyman',
+    title: 'Fix a leaking kitchen sink',
+    description:
+      'Kitchen sink has been leaking for two days, needs a quick repair. Have the tools, just need the expertise.',
+    budget: '₦10,000',
+    location: 'Surulere',
+    distanceLabel: '2.1km away',
+    postedAgo: 'Posted 3 hrs ago',
+    etaWindow: '1 - 1.5 hrs',
+    heroName: 'Grace E.',
+    heroInitial: 'G',
+    heroRating: 4,
+  },
+];
 
 type WizardStep = 1 | 2;
 type ActiveSheet = 'summary' | 'escrow' | 'success' | null;
@@ -77,11 +150,139 @@ function FieldLabel({ children }: { children: string }) {
   );
 }
 
+function BrowseTasks() {
+  const { colors } = useColorScheme();
+  const fg = twColor(colors.foreground);
+  const muted = twColor(colors.mutedForeground);
+  const currentTask = useTaskStore((state) => state.sidekickCurrentTask);
+  const acceptTask = useTaskStore((state) => state.acceptTask);
+  const [queue, setQueue] = React.useState<BrowsableTask[]>(AVAILABLE_TASKS);
+  const activeCardRef = React.useRef<TaskSwipeCardHandle>(null);
+
+  const handleSwiped = (direction: 'left' | 'right') => {
+    const current = queue[0];
+    setQueue((prev) => prev.slice(1));
+    if (direction === 'right' && current) {
+      acceptTask(browsableToTask(current));
+      router.push(`/task/${current.id}`);
+    }
+  };
+
+  if (currentTask) {
+    return (
+      <SafeAreaView
+        style={[
+          tw`flex-1 items-center justify-center px-8`,
+          { backgroundColor: colors.background },
+        ]}>
+        <View
+          style={[
+            tw`h-14 w-14 items-center justify-center rounded-full`,
+            { backgroundColor: withOpacity(ACCENT_TEAL, 0.12) },
+          ]}>
+          <ClipboardList size={24} color={ACCENT_TEAL} />
+        </View>
+        <Text fontWeight="bold" fontSize={16} classN={`mt-4 text-center text-[${fg}]`}>
+          You already have a task in progress
+        </Text>
+        <Text fontSize={13} classN={`mt-1.5 text-center text-[${muted}]`}>
+          Finish &ldquo;{currentTask.title}&rdquo; before you can accept another one.
+        </Text>
+        <Pressable
+          onPress={() => router.push(`/task/${currentTask.id}`)}
+          style={[
+            tw`mt-5 items-center justify-center rounded-full px-6 py-3.5`,
+            { backgroundColor: ACCENT_TEAL },
+          ]}>
+          <Text fontWeight="bold" fontSize={14} classN="text-white">
+            View current task
+          </Text>
+        </Pressable>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={[tw`flex-1`, { backgroundColor: colors.background }]}>
+      <View style={tw`px-4 pt-2`}>
+        <Text fontWeight="black" fontSize={22} classN={`text-[${fg}]`}>
+          Browse tasks nearby
+        </Text>
+        <Text fontSize={13} classN={`mt-1 text-[${muted}]`}>
+          Swipe right to accept, left to pass
+        </Text>
+      </View>
+
+      <View style={tw`flex-1 px-4 pb-2 pt-5`}>
+        {queue.length === 0 ? (
+          <View style={tw`flex-1 items-center justify-center px-4`}>
+            <View
+              style={[
+                tw`h-14 w-14 items-center justify-center rounded-full`,
+                { backgroundColor: withOpacity(ACCENT_TEAL, 0.12) },
+              ]}>
+              <ClipboardList size={24} color={ACCENT_TEAL} />
+            </View>
+            <Text fontWeight="medium" fontSize={14} classN={`mt-3 text-[${fg}]`}>
+              You&rsquo;re all caught up
+            </Text>
+            <Text fontSize={12} classN={`mt-1 text-center text-[${muted}]`}>
+              Check back later for more tasks nearby
+            </Text>
+          </View>
+        ) : (
+          queue
+            .slice(0, 3)
+            .map((task, index) => (
+              <TaskSwipeCard
+                key={task.id}
+                ref={index === 0 ? activeCardRef : undefined}
+                task={task}
+                active={index === 0}
+                stackDepth={index}
+                onSwiped={handleSwiped}
+              />
+            ))
+        )}
+      </View>
+
+      {queue.length > 0 && (
+        <View style={[tw`flex-row items-center justify-center gap-6 pt-4`, { paddingBottom: 110 }]}>
+          <Pressable
+            onPress={() => activeCardRef.current?.swipeLeft()}
+            style={[
+              tw`h-14 w-14 items-center justify-center rounded-full`,
+              { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.grey5 },
+            ]}>
+            <X size={26} color={REJECT_COLOR} />
+          </Pressable>
+          <Pressable
+            onPress={() => activeCardRef.current?.swipeRight()}
+            style={[
+              tw`h-16 w-16 items-center justify-center rounded-full`,
+              { backgroundColor: ACCENT_TEAL },
+            ]}>
+            <Heart size={26} color="white" fill="white" />
+          </Pressable>
+        </View>
+      )}
+    </SafeAreaView>
+  );
+}
+
 export default function Post() {
+  const role = useRoleStore((state) => state.role);
+  if (role === 'sidekick') return <BrowseTasks />;
+  return <PostTaskWizard />;
+}
+
+function PostTaskWizard() {
   const { showActionSheetWithOptions } = useActionSheet();
+  const { category: categoryParam } = useLocalSearchParams<{ category?: string }>();
+  const initialCategory = CATEGORIES.includes(categoryParam ?? '') ? (categoryParam ?? null) : null;
   const [step, setStep] = React.useState<WizardStep>(1);
   const [title, setTitle] = React.useState('');
-  const [category, setCategory] = React.useState<string | null>(null);
+  const [category, setCategory] = React.useState<string | null>(initialCategory);
   const [description, setDescription] = React.useState('');
   const [budget, setBudget] = React.useState('');
   const [photos, setPhotos] = React.useState<string[]>([]);

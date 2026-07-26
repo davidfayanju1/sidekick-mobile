@@ -1,4 +1,4 @@
-import { Svg, Path } from 'react-native-svg';
+import { Svg, Path, Rect, Line } from 'react-native-svg';
 
 export const MyTaskIcon = () => {
   return (
@@ -60,6 +60,86 @@ export const PostTabActiveIcon = () => {
       <Path
         d="M9.99999 1.6665C5.40832 1.6665 1.66666 5.40817 1.66666 9.99984C1.66666 14.5915 5.40832 18.3332 9.99999 18.3332C14.5917 18.3332 18.3333 14.5915 18.3333 9.99984C18.3333 5.40817 14.5917 1.6665 9.99999 1.6665ZM13.3333 10.6248H10.625V13.3332C10.625 13.6748 10.3417 13.9582 9.99999 13.9582C9.65832 13.9582 9.37499 13.6748 9.37499 13.3332V10.6248H6.66666C6.32499 10.6248 6.04166 10.3415 6.04166 9.99984C6.04166 9.65817 6.32499 9.37484 6.66666 9.37484H9.37499V6.6665C9.37499 6.32484 9.65832 6.0415 9.99999 6.0415C10.3417 6.0415 10.625 6.32484 10.625 6.6665V9.37484H13.3333C13.675 9.37484 13.9583 9.65817 13.9583 9.99984C13.9583 10.3415 13.675 10.6248 13.3333 10.6248Z"
         fill="#489A9F"
+      />
+    </Svg>
+  );
+};
+
+export const TasksTabIcon = () => {
+  return (
+    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <Rect
+        x="3.75"
+        y="4.16667"
+        width="12.5"
+        height="13.3333"
+        rx="2"
+        stroke="#8C9397"
+        strokeWidth="1.25"
+      />
+      <Rect x="7.5" y="2.5" width="5" height="3.33333" rx="1" stroke="#8C9397" strokeWidth="1.25" />
+      <Line
+        x1="6.66667"
+        y1="9.58333"
+        x2="13.3333"
+        y2="9.58333"
+        stroke="#8C9397"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+      />
+      <Line
+        x1="6.66667"
+        y1="12.5"
+        x2="13.3333"
+        y2="12.5"
+        stroke="#8C9397"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+      />
+      <Line
+        x1="6.66667"
+        y1="15.4167"
+        x2="10.8333"
+        y2="15.4167"
+        stroke="#8C9397"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
+
+export const TasksTabActiveIcon = () => {
+  return (
+    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <Rect x="3.75" y="4.16667" width="12.5" height="13.3333" rx="2" fill="#489A9F" />
+      <Rect x="7.5" y="2.5" width="5" height="3.33333" rx="1" fill="#489A9F" />
+      <Line
+        x1="6.66667"
+        y1="9.58333"
+        x2="13.3333"
+        y2="9.58333"
+        stroke="white"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+      />
+      <Line
+        x1="6.66667"
+        y1="12.5"
+        x2="13.3333"
+        y2="12.5"
+        stroke="white"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+      />
+      <Line
+        x1="6.66667"
+        y1="15.4167"
+        x2="10.8333"
+        y2="15.4167"
+        stroke="white"
+        strokeWidth="1.25"
+        strokeLinecap="round"
       />
     </Svg>
   );

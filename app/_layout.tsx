@@ -7,6 +7,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useDeviceContext } from 'twrnc';
 import { tw } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
@@ -41,7 +42,7 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar
         style={isDarkColorScheme ? 'light' : 'dark'}
         backgroundColor="transparent"
@@ -52,10 +53,14 @@ export default function RootLayout() {
           <Stack screenOptions={{ animation: 'ios_from_right' }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="task/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="get-started" options={{ headerShown: false }} />
             <Stack.Screen name="payment-method" options={{ headerShown: false }} />
             <Stack.Screen name="verify-id" options={{ headerShown: false }} />
             <Stack.Screen name="bank-details" options={{ headerShown: false }} />
+            <Stack.Screen name="wallet" options={{ headerShown: false }} />
+            <Stack.Screen name="payment-history" options={{ headerShown: false }} />
+            <Stack.Screen name="refer" options={{ headerShown: false }} />
             <Stack.Protected guard={!SKIP_ONBOARDING}>
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
@@ -65,8 +70,6 @@ export default function RootLayout() {
           </Stack>
         </NavThemeProvider>
       </ActionSheetProvider>
-
-      {/* </ExampleProvider> */}
-    </>
+    </GestureHandlerRootView>
   );
 }

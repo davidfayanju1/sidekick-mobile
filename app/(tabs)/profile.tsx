@@ -43,10 +43,10 @@ const APPEARANCE_OPTIONS: { value: ThemePreference; label: string; icon: typeof 
 ];
 
 const MENU_ITEMS: { icon: typeof Wallet; label: string; onPress?: () => void }[] = [
-  { icon: Wallet, label: 'Wallet' },
-  { icon: Receipt, label: 'Payment History' },
+  { icon: Wallet, label: 'Wallet', onPress: () => router.push('/wallet') },
+  { icon: Receipt, label: 'Payment History', onPress: () => router.push('/payment-history') },
   { icon: FileText, label: 'Terms & Conditions', onPress: () => router.push('/terms') },
-  { icon: Gift, label: 'Refer a friend' },
+  { icon: Gift, label: 'Refer a friend', onPress: () => router.push('/refer') },
 ];
 
 export default function Profile() {
