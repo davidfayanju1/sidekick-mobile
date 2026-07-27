@@ -15,6 +15,7 @@
       [
         "expo-splash-screen",
         {
+          "image": "./assets/images/splash.png",
           "backgroundColor": "#19262E"
         }
       ],
@@ -26,6 +27,12 @@
         {
           "photosPermission": "Allow Sidekick to access your photos to attach reference images to a task.",
           "cameraPermission": "Allow Sidekick to use your camera to attach reference photos to a task."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Sidekick to use your location to show tasks and Sidekicks near you."
         }
       ]
     ],

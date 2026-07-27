@@ -101,7 +101,7 @@ export default function Profile() {
     <SafeAreaView style={[tw`flex-1`, { backgroundColor: colors.background }]}>
       <ScrollView
         style={tw`flex-1 px-4`}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}>
         <View style={tw`mt-4 flex-row items-center gap-3`}>
           <View

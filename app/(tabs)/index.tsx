@@ -26,6 +26,7 @@ import {
   type Task,
 } from '@/components/UI/TaskParts';
 import { LiveDot } from '@/components/UI/TaskTimeline';
+import { captureUserLocation } from '@/lib/location';
 import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
 import { useOutstandingStepsCount, useRoleStore, type UserRole } from '@/store/roleStore';
@@ -270,7 +271,7 @@ function QuickCategories() {
 }
 
 export default function Dashboard() {
-  const { role, hasChosenRole, setRole } = useRoleStore();
+  const { role, hasChosenRole, setRole, locationStatus, locationLabel } = useRoleStore();
   const outstandingSteps = useOutstandingStepsCount();
   const { colors } = useColorScheme();
   const sidekickCurrentTask = useTaskStore((state) => state.sidekickCurrentTask);
@@ -285,10 +286,6 @@ export default function Dashboard() {
 
   const offersTask = POSTED_TASKS.find((task) => task.status === 'offers');
 
-  React.useEffect(() => {
-    router.push('/(tabs)/post');
-  }, []);
-
   const handleTaskPress = (task: Task) => {
     if (task.status === 'offers') {
       setActiveSheet('offers');
@@ -299,13 +296,21 @@ export default function Dashboard() {
 
   const handleRoleSelect = (selectedRole: UserRole) => {
     setRole(selectedRole);
+    captureUserLocation();
     router.push('/get-started');
   };
+
+  const locationText =
+    locationStatus === 'loading'
+      ? 'Finding you…'
+      : locationStatus === 'denied'
+        ? 'Enable location for nearby tasks'
+        : (locationLabel ?? 'Location unavailable');
 
   return (
     <SafeAreaView style={[tw`flex-1`, { backgroundColor: colors.background }]}>
       <View style={tw`flex-row items-center justify-between px-4 pt-2`}>
-        <Pressable style={tw`flex-row items-center gap-2`}>
+        <Pressable onPress={() => captureUserLocation()} style={tw`flex-row items-center gap-2`}>
           <View
             style={[
               tw`h-10 w-10 items-center justify-center rounded-full`,
@@ -323,7 +328,7 @@ export default function Dashboard() {
               <ChevronRight size={16} color={colors.mutedForeground} />
             </View>
             <Text fontSize={12} classN={`text-[${muted}]`}>
-              Lagos Island
+              {locationText}
             </Text>
           </View>
         </Pressable>
