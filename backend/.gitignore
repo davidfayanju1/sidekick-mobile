@@ -1,0 +1,4 @@
+.env
+*.exe
+sidekick-api
+/tmp

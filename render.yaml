@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: sidekick-api
+    runtime: docker
+    dockerfilePath: Dockerfile
+    dockerContext: backend
+    envVars:
+      - key: APP_ENV
+        value: prod
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sidekick-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+        type: secret
+      - key: PORT
+        value: 8080
+    healthCheckPath: /health
+    autoDeploy: true
+
+databases:
+  - name: sidekick-db
+    plan: starter
+    databaseName: sidekick_prod
+    ipAllowList: []

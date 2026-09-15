@@ -1,0 +1,1541 @@
+openapi: 3.1.0
+info:
+  title: Sidekick API
+  version: 0.8.0
+  description: |
+    Two-sided marketplace for short, local tasks (MVP backend, pure Go).
+    Every endpoint below is live and try-able from the Scalar docs at /docs.
+    Auth is Bearer JWT except the public auth endpoints.
+servers:
+  - url: /
+    description: Current deployment (Scalar Try-It targets this host)
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, example: bad_request }
+        message: { type: string }
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        auth_provider: { type: string, enum: [email, google, apple] }
+        email: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        phone_verified: { type: boolean }
+        display_name: { type: string }
+        avatar_url: { type: string, nullable: true }
+        bio: { type: string, nullable: true }
+        location: { type: string, nullable: true }
+        latitude: { type: number, nullable: true }
+        longitude: { type: number, nullable: true }
+        role_intent: { type: string, nullable: true, enum: [post, work, both] }
+        verification_status: { type: string }
+        rating_avg: { type: number }
+        rating_count: { type: integer }
+        tasks_completed: { type: integer }
+        onboarding_completed: { type: boolean }
+        created_at: { type: string, format: date-time }
+    PublicProfile:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        display_name: { type: string }
+        avatar_url: { type: string, nullable: true }
+        bio: { type: string, nullable: true }
+        location: { type: string, nullable: true }
+        verification_status: { type: string }
+        rating_avg: { type: number }
+        rating_count: { type: integer }
+        tasks_completed: { type: integer }
+        member_since: { type: string, format: date-time }
+    Task:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        poster_id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        category: { type: string }
+        location_approx: { type: string }
+        location_lat: { type: number, nullable: true }
+        location_lng: { type: number, nullable: true }
+        location_exact: { type: string, nullable: true, description: Only for poster / assigned worker }
+        location_exact_lat: { type: number, nullable: true }
+        location_exact_lng: { type: number, nullable: true }
+        timing_type: { type: string, enum: [asap, specific_date, flexible_range] }
+        scheduled_for: { type: string, format: date-time, nullable: true }
+        flexible_from: { type: string, nullable: true }
+        flexible_to: { type: string, nullable: true }
+        budget: { type: integer }
+        platform_fee: { type: integer }
+        total_charge: { type: integer }
+        status: { type: string }
+        offer_count: { type: integer }
+        escrow_status: { type: string }
+        draft_payload: { type: object, nullable: true }
+        photos:
+          type: array
+          items: { $ref: '#/components/schemas/TaskPhoto' }
+        created_at: { type: string, format: date-time }
+    TaskPhoto:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        url: { type: string }
+        type: { type: string, enum: [listing, completion] }
+    TaskCard:
+      type: object
+      description: Feed/search card. Never contains location_exact*, phone or email.
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        budget: { type: integer }
+        distance_km: { type: number, nullable: true }
+        timing_type: { type: string }
+        scheduled_for: { type: string, format: date-time, nullable: true }
+        flexible_from: { type: string, nullable: true }
+        flexible_to: { type: string, nullable: true }
+        category: { type: string }
+        offer_count: { type: integer }
+        location_approx: { type: string }
+        created_at: { type: string, format: date-time }
+        poster:
+          type: object
+          properties:
+            rating_avg: { type: number }
+            rating_count: { type: integer }
+            verification_status: { type: string }
+    Quote:
+      type: object
+      properties:
+        budget: { type: integer }
+        fee: { type: integer }
+        total: { type: integer }
+        fee_payer: { type: string }
+    Fund:
+      type: object
+      properties:
+        task_id: { type: string, format: uuid }
+        status: { type: string }
+        escrow_status: { type: string }
+        transaction_id: { type: string, format: uuid }
+        repeated: { type: boolean }
+    Escrow:
+      type: object
+      properties:
+        status: { type: string }
+        amount: { type: integer }
+        fee: { type: integer }
+        provider_ref_masked: { type: string }
+    Offer:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        task_id: { type: string, format: uuid }
+        worker_id: { type: string, format: uuid }
+        amount: { type: integer }
+        is_counter: { type: boolean }
+        message: { type: string, nullable: true }
+        poster_counter_amount: { type: integer, nullable: true }
+        poster_counter_status: { type: string }
+        status: { type: string, enum: [pending, accepted, declined, withdrawn, auto_declined, expired] }
+        decline_reason: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        responded_at: { type: string, format: date-time, nullable: true }
+    OfferWithWorker:
+      allOf:
+        - $ref: '#/components/schemas/Offer'
+        - type: object
+          properties:
+            worker_rating_avg: { type: number }
+            worker_rating_count: { type: integer }
+            worker_verification_status: { type: string }
+            worker_tasks_completed: { type: integer }
+            worker_display_name: { type: string }
+            worker_avatar_url: { type: string, nullable: true }
+    AcceptResult:
+      type: object
+      properties:
+        task_id: { type: string, format: uuid }
+        offer_id: { type: string, format: uuid }
+        task_status: { type: string }
+        conversation_id: { type: string, format: uuid }
+        repeated: { type: boolean }
+    Conversation:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        task_id: { type: string, format: uuid }
+        poster_id: { type: string, format: uuid }
+        worker_id: { type: string, format: uuid }
+    Message:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        conversation_id: { type: string, format: uuid }
+        sender_id: { type: string, nullable: true }
+        type: { type: string, enum: [text, image, system] }
+        body: { type: string }
+        system_event: { type: string, nullable: true }
+        attachment_url: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+    Review:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        task_id: { type: string, format: uuid }
+        reviewer_id: { type: string, format: uuid }
+        reviewee_id: { type: string, format: uuid }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        body: { type: string, nullable: true }
+        is_published: { type: boolean }
+        published_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+paths:
+  /health:
+    get:
+      operationId: health
+      security: []
+      summary: Liveness probe
+      responses:
+        '200': { description: OK }
+  /auth/signup:
+    post:
+      operationId: signup
+      security: []
+      summary: Sign up with email + password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, display_name]
+              properties:
+                email: { type: string }
+                password: { type: string, minLength: 8 }
+                display_name: { type: string, minLength: 2, maxLength: 50 }
+      responses:
+        '201': { description: Created }
+        '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '409': { description: Email registered, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /auth/signin:
+    post:
+      operationId: signin
+      security: []
+      summary: Sign in with email + password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: Session pair }
+        '401': { description: Invalid credentials, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /auth/oauth:
+    post:
+      operationId: oauth
+      security: []
+      summary: Google / Apple sign-in (sandbox verifier in dev)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider, id_token]
+              properties:
+                provider: { type: string, enum: [google, apple] }
+                id_token: { type: string }
+                display_name: { type: string }
+      responses:
+        '200': { description: Signed in }
+        '201': { description: New account created }
+  /auth/phone/send:
+    post:
+      operationId: otpSend
+      security: []
+      summary: Send phone OTP (60s cooldown, hourly caps)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, phone]
+              properties:
+                user_id: { type: string, format: uuid }
+                phone: { type: string, example: '+15551234567' }
+      responses:
+        '200': { description: Sent }
+        '409': { description: Phone in use }
+        '429': { description: Cooldown / rate limit }
+  /auth/phone/verify:
+    post:
+      operationId: otpVerify
+      summary: Verify phone OTP (5 attempts, 5-min TTL)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code]
+              properties:
+                phone: { type: string }
+                code: { type: string }
+      responses:
+        '200': { description: Verified }
+        '423': { description: Code locked }
+  /auth/password-reset/request:
+    post:
+      operationId: resetRequest
+      security: []
+      summary: Request reset email (always 200, no enumeration)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+      responses:
+        '200': { description: OK }
+  /auth/password-reset/confirm:
+    post:
+      operationId: resetConfirm
+      security: []
+      summary: Confirm reset with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, new_password]
+              properties:
+                token: { type: string }
+                new_password: { type: string, minLength: 8 }
+      responses:
+        '200': { description: Password changed, sessions revoked }
+  /auth/refresh:
+    post:
+      operationId: refresh
+      security: []
+      summary: Rotate refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        '200': { description: New pair }
+        '401': { description: Invalid refresh token }
+  /auth/signout:
+    post:
+      operationId: signout
+      summary: Revoke current session
+      responses:
+        '200': { description: OK }
+  /me:
+    get:
+      operationId: getMe
+      summary: Own full profile
+      responses:
+        '200': { description: User }
+    patch:
+      operationId: updateMe
+      summary: Update profile (strict allowlist; server-owned fields ignored)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name: { type: string, minLength: 2, maxLength: 50 }
+                bio: { type: string, maxLength: 500 }
+                location: { type: string }
+                latitude: { type: number }
+                longitude: { type: number }
+                avatar_url: { type: string }
+      responses:
+        '200': { description: Updated user }
+  /me/role:
+    post:
+      operationId: setRole
+      summary: Set role intent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role_intent]
+              properties:
+                role_intent: { type: string, enum: [post, work, both] }
+      responses:
+        '200': { description: Updated user }
+  /me/account:
+    delete:
+      operationId: deleteAccount
+      summary: Soft-delete with PII purge (confirm required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm: { type: boolean }
+      responses:
+        '200': { description: Deleted }
+  /users/{id}:
+    get:
+      operationId: publicProfile
+      summary: Public profile (no phone/email/exact location)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Profile }
+        '404': { description: Not found }
+  /me/avatar/upload-url:
+    post:
+      operationId: avatarGrant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_type]
+              properties:
+                content_type: { type: string, example: image/jpeg }
+      responses:
+        '200': { description: Grant with object/signature/expires_at }
+  /me/avatar/complete:
+    post:
+      operationId: avatarComplete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [object, signature, expires_at, image_base64]
+              properties:
+                object: { type: string }
+                signature: { type: string }
+                expires_at: { type: string, format: date-time }
+                image_base64: { type: string, format: byte }
+      responses:
+        '200': { description: Avatar set }
+  /me/push-tokens:
+    get:
+      operationId: listTokens
+      responses:
+        '200': { description: Token list }
+    post:
+      operationId: registerToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, platform]
+              properties:
+                token: { type: string }
+                platform: { type: string, enum: [ios, android, web] }
+      responses:
+        '200': { description: Registered }
+    delete:
+      operationId: removeToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        '200': { description: Removed }
+  /config/public:
+    get:
+      operationId: publicConfig
+      summary: Non-sensitive app config (authenticated-readable)
+      responses:
+        '200': { description: Config map }
+  /tasks:
+    post:
+      operationId: createTask
+      summary: Create draft task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description, category, location_approx, location_exact, timing_type, budget]
+              properties:
+                title: { type: string, minLength: 10, maxLength: 80 }
+                description: { type: string, minLength: 20, maxLength: 2000 }
+                category: { type: string }
+                location_approx: { type: string }
+                location_lat: { type: number }
+                location_lng: { type: number }
+                location_exact: { type: string }
+                location_exact_lat: { type: number }
+                location_exact_lng: { type: number }
+                timing_type: { type: string, enum: [asap, specific_date, flexible_range] }
+                scheduled_for: { type: string, format: date-time }
+                flexible_from: { type: string }
+                flexible_to: { type: string }
+                budget: { type: integer }
+      responses:
+        '201': { description: Draft task }
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      summary: Task detail (location-split enforced)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Task }
+        '404': { description: Not found }
+    patch:
+      operationId: editTask
+      summary: Edit (draft, or open with zero offers; budget locked once funded)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+                category: { type: string }
+                location_approx: { type: string }
+                location_exact: { type: string }
+                timing_type: { type: string }
+                budget: { type: integer }
+      responses:
+        '200': { description: Updated task }
+        '409': { description: Not editable / budget locked }
+    delete:
+      operationId: cancelTask
+      summary: Cancel (full refund when funded and unaccepted)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Cancelled task }
+  /tasks/{id}/draft:
+    put:
+      operationId: saveDraft
+      summary: Autosave draft payload (JSON object, incomplete allowed)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [draft]
+              properties:
+                draft: { type: object }
+      responses:
+        '200': { description: Saved }
+  /me/drafts:
+    get:
+      operationId: listDrafts
+      summary: Own drafts only
+      responses:
+        '200': { description: Draft list }
+  /tasks/{id}/photos/grant:
+    post:
+      operationId: photoGrant
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_type]
+              properties:
+                content_type: { type: string, example: image/jpeg }
+      responses:
+        '200': { description: Grant }
+  /tasks/{id}/photos/complete:
+    post:
+      operationId: photoComplete
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [object, signature, expires_at, image_base64]
+              properties:
+                object: { type: string }
+                signature: { type: string }
+                expires_at: { type: string, format: date-time }
+                image_base64: { type: string, format: byte }
+      responses:
+        '201': { description: Photo attached (5-listing cap enforced) }
+  /fees/quote:
+    get:
+      operationId: feeQuote
+      summary: Pure fee quote from app_config
+      parameters:
+        - in: query
+          name: budget
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Quote }
+  /tasks/{id}/fund:
+    post:
+      operationId: fundTask
+      summary: "Fund draft -> escrow hold -> open (idempotent)"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [payment_method_ref, idempotency_key]
+              properties:
+                payment_method_ref: { type: string }
+                idempotency_key: { type: string }
+      responses:
+        '200': { description: Funded }
+        '502': { description: payment_failed, retryable }
+  /tasks/{id}/escrow:
+    get:
+      operationId: escrowView
+      summary: Escrow status (masked provider ref, poster only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Escrow view }
+  /feed:
+    get:
+      operationId: feed
+      summary: Open-task cards, distance then recency, keyset paged
+      parameters:
+        - in: query
+          name: lat
+          schema: { type: number }
+        - in: query
+          name: lng
+          schema: { type: number }
+        - in: query
+          name: radius_km
+          schema: { type: number, description: Clamped to 50 }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: min_budget
+          schema: { type: integer }
+        - in: query
+          name: max_budget
+          schema: { type: integer }
+        - in: query
+          name: timing
+          schema: { type: string, enum: [asap, specific_date, flexible_range] }
+        - in: query
+          name: cursor
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        '200': { description: Cards + next_cursor + radius_km_applied }
+  /search:
+    get:
+      operationId: search
+      summary: Full-text + trigram task search (30 req/min)
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: min_budget
+          schema: { type: integer }
+        - in: query
+          name: max_budget
+          schema: { type: integer }
+        - in: query
+          name: timing
+          schema: { type: string }
+        - in: query
+          name: cursor
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        '200': { description: Ranked results + next_cursor }
+        '429': { description: Rate limited }
+  /admin/probe:
+    get:
+      operationId: adminProbe
+      summary: Admin-claim gate probe
+      responses:
+        '200': { description: Admin confirmed }
+        '403': { description: Admin required }
+  /tasks/{id}/offers:
+    post:
+      operationId: createOffer
+      summary: Make offer (at-budget or counter with required message)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount: { type: integer, description: Defaults to task budget }
+                message: { type: string, maxLength: 300 }
+      responses:
+        '201': { description: Offer created }
+        '409': { description: Already have pending offer }
+    get:
+      operationId: listOffers
+      summary: List offers for task (poster-only, ranked)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Ranked offers }
+  /me/offers:
+    get:
+      operationId: myOffers
+      summary: List my offers filtered by status
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [pending, accepted, declined, withdrawn, auto_declined, expired] }
+      responses:
+        '200': { description: My offers }
+  /offers/{id}/decline:
+    post:
+      operationId: declineOffer
+      summary: Decline offer (poster-only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        '200': { description: Declined }
+  /offers/{id}/counter:
+    post:
+      operationId: counterOffer
+      summary: Poster counter (one round only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount: { type: integer }
+      responses:
+        '200': { description: Countered }
+        '409': { description: Already countered }
+  /offers/{id}/respond:
+    post:
+      operationId: respondCounter
+      summary: Worker respond to poster counter
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [accept, decline] }
+      responses:
+        '200': { description: Responded (accept triggers assignment) }
+  /offers/{id}/accept:
+    post:
+      operationId: acceptOffer
+      summary: Accept offer — atomic (task assigned, siblings auto-declined, conversation + system message)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotency_key: { type: string }
+      responses:
+        '200': { description: Accepted }
+        '409': { description: No longer available }
+  /offers/{id}/withdraw:
+    post:
+      operationId: withdrawOffer
+      summary: Withdraw pending offer (worker-only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Withdrawn }
+  /tasks/{id}/conversation:
+    get:
+      operationId: getConversation
+      summary: Get conversation for task (poster or assigned worker)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Conversation }
+  /conversations/{id}/messages:
+    get:
+      operationId: listMessages
+      summary: List messages in conversation (participants only, paginated, most-recent-first)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: cursor
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        '200': { description: Messages }
+    post:
+      operationId: sendMessage
+      summary: Send text message (sanitized, 2000 chars, 30/min, blocked & frozen checks)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string, maxLength: 2000 }
+                type: { type: string, enum: [text] }
+      responses:
+        '201': { description: Message sent }
+        '403': { description: Forbidden / chat_frozen }
+        '429': { description: Rate limited }
+  /conversations:
+    get:
+      operationId: listConversations
+      summary: List my conversations (ordered by last_message_at desc)
+      responses:
+        '200': { description: Conversations }
+  /conversations/{id}/images/grant:
+    post:
+      operationId: grantChatImage
+      summary: Grant signed upload for chat image (jpg/png/webp)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content_type]
+              properties:
+                content_type: { type: string, example: image/jpeg }
+      responses:
+        '200': { description: Grant with object/signature/expires_at }
+  /conversations/{id}/images:
+    post:
+      operationId: sendChatImage
+      summary: Send image message (verifies signed upload, stores, creates image message with signed attachment_url)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [object, signature, expires_at, image_base64]
+              properties:
+                object: { type: string }
+                signature: { type: string }
+                expires_at: { type: string, format: date-time }
+                image_base64: { type: string, format: byte }
+      responses:
+        '201': { description: Image message created }
+  /messages/{id}/delivered:
+    post:
+      operationId: markDelivered
+      summary: Mark message delivered (recipient only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Marked delivered }
+  /messages/{id}/read:
+    post:
+      operationId: markRead
+      summary: Mark message read (recipient only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Marked read }
+  /chat-images/{object}:
+    get:
+      operationId: getChatImage
+      summary: Fetch chat image via signed URL (private, expiring)
+      parameters:
+        - in: path
+          name: object
+          required: true
+          schema: { type: string }
+        - in: query
+          name: sig
+          required: true
+          schema: { type: string }
+        - in: query
+          name: expires
+          required: true
+          schema: { type: string, format: date-time }
+      responses:
+        '200': { description: Image bytes }
+        '403': { description: Forbidden / signature required }
+  /users/{id}/block:
+    post:
+      operationId: blockUser
+      summary: Block user (upsert)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Blocked }
+    delete:
+      operationId: unblockUser
+      summary: Unblock user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Unblocked }
+  /blocks:
+    get:
+      operationId: listBlocks
+      summary: List my blocks (own relationships only)
+      responses:
+        '200': { description: Block list }
+  /conversations/{id}/report:
+    post:
+      operationId: reportConversation
+      summary: Report from conversation (creates reports row status open)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, enum: [spam, fraud, harassment, safety, off_platform_payment, other] }
+                detail: { type: string }
+      responses:
+        '201': { description: Report created }
+  /tasks/{id}/complete:
+    post:
+      operationId: markComplete
+      summary: Mark task complete (assigned worker only, 0-5 completion photos, sets auto_release_at from app_config)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                photo_urls:
+                  type: array
+                  items: { type: string }
+                  maxItems: 5
+      responses:
+        '200': { description: Marked pending confirmation }
+        '403': { description: Not assigned worker }
+        '409': { description: Wrong status }
+  /tasks/{id}/confirm:
+    post:
+      operationId: confirmCompletion
+      summary: Confirm completion (poster only, releases escrow via shared release_escrow, increments tasks_completed, system payment_released)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Completed and released }
+        '409': { description: Not pending or already released }
+  /tasks/{id}/dispute:
+    post:
+      operationId: raiseDispute
+      summary: Raise dispute (either party, assigned or pending, freezes escrow, one open per task)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, description]
+              properties:
+                reason: { type: string }
+                description: { type: string }
+      responses:
+        '201': { description: Dispute opened }
+        '409': { description: Already open }
+  /tasks/{id}/cancel:
+    post:
+      operationId: cancelTask
+      summary: "Cancel task (branching: poster free/compensated, worker reopen; grace/comp from app_config)"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        '200': { description: Cancelled }
+        '409': { description: Cannot cancel in status }
+  /internal/cron/auto-release:
+    post:
+      operationId: autoRelease
+      summary: Cron tick - auto-release escrow for due tasks (uses shared release_escrow, idempotent via unique index)
+      responses:
+        '200': { description: Released count }
+  /internal/cron/auto-release-warning:
+    post:
+      operationId: autoReleaseWarning
+      summary: Cron tick - warn poster 24h before auto-release (uses auto_release_warning_hours from app_config, idempotent)
+      responses:
+        '200': { description: Warning ids }
+  /me/wallet:
+    get:
+      operationId: getWallet
+      summary: Get own wallet (available/pending/currency + recent activity, empty state well-formed)
+      responses:
+        '200': { description: Wallet }
+  /me/transactions:
+    get:
+      operationId: listTransactions
+      summary: List own transactions filterable by type, paginated
+      parameters:
+        - in: query
+          name: type
+          schema: { type: string, enum: [escrow_hold, release, refund, withdrawal, cancellation_compensation] }
+        - in: query
+          name: cursor
+          schema: { type: string }
+      responses:
+        '200': { description: Transactions }
+  /me/payment-methods:
+    get:
+      operationId: listPaymentMethods
+      summary: List saved cards (tokenized only, no raw PAN)
+      responses:
+        '200': { description: Cards }
+    post:
+      operationId: addPaymentMethod
+      summary: Add saved card (provider_ref tokenized, last4/brand, one default via partial unique index)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider_ref, last4]
+              properties:
+                provider_ref: { type: string, description: Provider token, never raw PAN }
+                last4: { type: string }
+                brand: { type: string }
+                exp_month: { type: integer }
+                exp_year: { type: integer }
+      responses:
+        '201': { description: Card added }
+  /me/payment-methods/{id}:
+    delete:
+      operationId: deletePaymentMethod
+      summary: Delete saved card (owner only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Deleted }
+  /me/payout-methods:
+    get:
+      operationId: listPayoutMethods
+      summary: List payout methods (owner only, tokenized)
+      responses:
+        '200': { description: Payout methods }
+    post:
+      operationId: addPayoutMethod
+      summary: Add payout method (bank_ref_token, last4/bank_name, never raw account)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bank_ref_token]
+              properties:
+                bank_ref_token: { type: string }
+                bank_ref: { type: string }
+                last4: { type: string }
+                bank_name: { type: string }
+      responses:
+        '201': { description: Payout method added }
+  /me/withdrawals:
+    post:
+      operationId: createWithdrawal
+      summary: Withdraw available balance (checks balance, verified status, idempotent, processing until webhook)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, payout_method_id, idempotency_key]
+              properties:
+                amount: { type: integer }
+                payout_method_id: { type: string, format: uuid }
+                idempotency_key: { type: string }
+      responses:
+        '201': { description: Withdrawal processing }
+        '403': { description: verification_required }
+        '400': { description: insufficient_funds }
+  /transactions/{id}/receipt:
+    get:
+      operationId: getReceipt
+      summary: Receipt for transaction (payer/payee only, masked provider_ref, fee breakdown)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Receipt }
+  /webhooks/payments:
+    post:
+      operationId: webhookPayments
+      security: []
+      summary: Provider webhook (signature verified, idempotent, audit logged, never creates money without pending tx)
+      parameters:
+        - in: header
+          name: X-Webhook-Signature
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, type]
+              properties:
+                id: { type: string }
+                type: { type: string, example: payout.failed }
+                idempotency_key: { type: string }
+                provider_ref: { type: string }
+                status: { type: string }
+      responses:
+        '200': { description: Processed / duplicate }
+        '401': { description: bad_signature }
+  /tasks/{id}/reviews:
+    post:
+      operationId: submitReview
+      summary: Submit review (1-5, optional 500-char body, only poster/assigned worker on completed task, double-blind)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                rating: { type: integer, minimum: 1, maximum: 5 }
+                body: { type: string, maxLength: 500 }
+      responses:
+        '201': { description: Review created (unpublished until double-blind) }
+        '409': { description: Already reviewed }
+  /users/{id}/reviews:
+    get:
+      operationId: listPublicReviews
+      summary: List public reviews for user (only published, most recent first)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Published reviews }
+  /me/reviews:
+    get:
+      operationId: listOwnReviews
+      summary: List own reviews (given & received, hides unpublished rating/body about me)
+      responses:
+        '200': { description: Own reviews with pending flag }
+  /internal/cron/publish-reviews:
+    post:
+      operationId: publishReviewsCron
+      summary: Cron - publish reviews where both exist or 14-day fallback (idempotent, recomputes aggregates)
+      responses:
+        '200': { description: Published count }
+  /openapi.yaml:
+    get:
+      operationId: openapi
+      security: []
+      summary: This OpenAPI document
+      responses:
+        '200': { description: YAML spec }
+  /docs:
+    get:
+      operationId: docs
+      security: []
+      summary: Scalar API reference UI
+      responses:
+        '200': { description: HTML docs }
+  /me/verifications:
+    post:
+      operationId: submitVerification
+      summary: Submit ID verification document (at most one pending per user)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [document_url]
+              properties:
+                document_type: { type: string, enum: [passport, driving_licence, national_id] }
+                document_url: { type: string }
+      responses:
+        '201': { description: Verification submitted }
+        '409': { description: Verification already pending }
+  /admin/verifications:
+    get:
+      operationId: listPendingVerifications
+      summary: List pending verifications (admin only)
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        '200': { description: Pending verifications }
+        '403': { description: Admin required }
+  /admin/verifications/{id}/approve:
+    post:
+      operationId: approveVerification
+      summary: Approve verification (admin only, updates users.verification_status in same txn)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Approved }
+        '403': { description: Admin required }
+  /admin/verifications/{id}/reject:
+    post:
+      operationId: rejectVerification
+      summary: Reject verification with reason (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        '200': { description: Rejected }
+        '403': { description: Admin required }
+  /reports:
+    post:
+      operationId: submitReport
+      summary: Submit report against a user (any authenticated user)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reported_user_id, reason]
+              properties:
+                reported_user_id: { type: string, format: uuid }
+                task_id: { type: string, format: uuid, nullable: true }
+                conversation_id: { type: string, format: uuid, nullable: true }
+                reason: { type: string, enum: [spam, fraud, harassment, safety, off_platform_payment, other] }
+                detail: { type: string }
+      responses:
+        '201': { description: Report created }
+  /me/reports:
+    get:
+      operationId: listOwnReports
+      summary: List own submitted reports (reporter only, not visible to reported user)
+      responses:
+        '200': { description: Own reports }
+  /admin/reports:
+    get:
+      operationId: listOpenReports
+      summary: List open reports (admin only)
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        '200': { description: Open reports }
+        '403': { description: Admin required }
+  /admin/reports/{id}:
+    patch:
+      operationId: updateReportStatus
+      summary: "Transition report status (admin only: open -> reviewing -> actioned|dismissed)"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [reviewing, actioned, dismissed] }
+      responses:
+        '200': { description: Updated }
+        '403': { description: Admin required }
+        '409': { description: Invalid transition }
+  /disputes/{id}/evidence:
+    post:
+      operationId: addEvidence
+      summary: Upload evidence to dispute (party only, while open/under_review)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [evidence_url]
+              properties:
+                evidence_url: { type: string }
+      responses:
+        '200': { description: Evidence added }
+        '403': { description: Not a party }
+        '409': { description: Dispute not open }
+  /admin/disputes:
+    get:
+      operationId: listOpenDisputes
+      summary: List open/under_review disputes (admin only)
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        '200': { description: Open disputes }
+        '403': { description: Admin required }
+  /admin/disputes/{id}/triage:
+    patch:
+      operationId: triageDispute
+      summary: Mark dispute as under_review (admin only, no money movement)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Triaged }
+        '403': { description: Admin required }
+  /admin/disputes/{id}/resolve:
+    post:
+      operationId: resolveDispute
+      summary: "Resolve dispute (admin only, reuses ledger.ReleaseTx/RefundEscrowTx, supports released|refunded|split)"
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: { type: string, enum: [released, refunded, split] }
+                compensation_amount: { type: integer, nullable: true, description: Required for split }
+                resolution_notes: { type: string }
+      responses:
+        '200': { description: Resolved }
+        '403': { description: Admin required }
+        '409': { description: Already resolved }
