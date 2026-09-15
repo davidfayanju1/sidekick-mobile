@@ -2,7 +2,6 @@ import { create } from 'zustand';
 
 export type UserRole = 'hero' | 'sidekick';
 export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
-export type LocationStatus = 'idle' | 'loading' | 'granted' | 'denied';
 
 interface RoleState {
   role: UserRole | null;
@@ -17,11 +16,6 @@ interface RoleState {
 
   bankDetailsAdded: boolean;
   setBankDetailsAdded: (added: boolean) => void;
-
-  locationStatus: LocationStatus;
-  locationLabel: string | null;
-  setLocationStatus: (status: LocationStatus) => void;
-  setLocationLabel: (label: string | null) => void;
 }
 
 export const useRoleStore = create<RoleState>((set) => ({
@@ -37,11 +31,6 @@ export const useRoleStore = create<RoleState>((set) => ({
 
   bankDetailsAdded: false,
   setBankDetailsAdded: (bankDetailsAdded) => set({ bankDetailsAdded }),
-
-  locationStatus: 'idle',
-  locationLabel: null,
-  setLocationStatus: (locationStatus) => set({ locationStatus }),
-  setLocationLabel: (locationLabel) => set({ locationLabel }),
 }));
 
 export function useOutstandingStepsCount() {
