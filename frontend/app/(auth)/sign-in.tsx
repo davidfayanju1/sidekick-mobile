@@ -8,10 +8,7 @@ import { GoogleIcon } from '@/components/icons/GoogleIcon';
 import Form from '@/components/UI/Form';
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
-
-const BORDER = '#D1D4D5';
-const ACCENT_TEAL = '#489A9F';
-const ACCENT_ORANGE = '#FF7A55';
+import { colors } from '@/theme/palette';
 
 export default function SignIn() {
   const [email, setEmail] = React.useState('');
@@ -24,19 +21,19 @@ export default function SignIn() {
           onPress={() => router.back()}
           hitSlop={8}
           style={tw`-ml-2 mt-2 h-10 w-10 items-center justify-center`}>
-          <ChevronLeft size={26} color="#000" />
+          <ChevronLeft size={26} color={colors.iconPrimary} />
         </Pressable>
 
         <Text fontWeight="bold" fontSize={24} classN="mt-3 text-black">
           Welcome Back
         </Text>
-        <Text fontSize={14} classN="mt-1 text-[#B7B7B7]">
+        <Text fontSize={14} classN={`mt-1 text-[${colors.textSubtle}]`}>
           Sign in to your Sidekick account
         </Text>
 
         <Pressable
           style={{
-            borderColor: BORDER,
+            borderColor: colors.borderStrong,
             ...tw`mt-6 flex-row items-center justify-center rounded-full border h-[44px]`,
           }}>
           <GoogleIcon size={20} />
@@ -47,21 +44,21 @@ export default function SignIn() {
 
         <Pressable
           style={{
-            borderColor: BORDER,
+            borderColor: colors.borderStrong,
             ...tw`mt-6 flex-row items-center justify-center rounded-full border h-[44px]`,
           }}>
-          <Apple size={20} color="#000" fill="#000" />
+          <Apple size={20} color={colors.iconPrimary} fill={colors.iconPrimary} />
           <Text fontWeight="medium" fontSize={14} classN="ml-2 text-black">
             Continue with Apple
           </Text>
         </Pressable>
 
         <View style={tw`mt-6 flex-row items-center gap-3`}>
-          <View style={[tw`h-px flex-1`, { backgroundColor: '#8C9296' }]} />
-          <Text fontSize={12} classN="text-[#8C9296]">
+          <View style={[tw`h-px flex-1`, { backgroundColor: colors.textMutedAlt }]} />
+          <Text fontSize={12} classN={`text-[${colors.textMutedAlt}]`}>
             Or sign in with Email
           </Text>
-          <View style={[tw`h-px flex-1`, { backgroundColor: '#8C9296' }]} />
+          <View style={[tw`h-px flex-1`, { backgroundColor: colors.textMutedAlt }]} />
         </View>
 
         <Form
@@ -95,7 +92,8 @@ export default function SignIn() {
           </Text>
         </Pressable>
 
-        <Pressable style={tw`mt-6 items-center justify-center rounded-full py-4 bg-[#489A9F]`}>
+        <Pressable
+          style={tw`mt-6 items-center justify-center rounded-full py-4 bg-[${colors.brand}]`}>
           <Text fontWeight="bold" fontSize={16} classN="text-white">
             Sign In
           </Text>
@@ -106,7 +104,7 @@ export default function SignIn() {
             New here?{' '}
           </Text>
           <Pressable onPress={() => router.push('/sign-up')} hitSlop={8}>
-            <Text fontWeight="bold" fontSize={13} classN={`text-[${ACCENT_ORANGE}]`}>
+            <Text fontWeight="bold" fontSize={13} classN={`text-[${colors.accentOrange}]`}>
               Create account
             </Text>
           </Pressable>

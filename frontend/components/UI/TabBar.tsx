@@ -18,6 +18,7 @@ import {
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
 import { useRoleStore } from '@/store/roleStore';
+import { colors } from '@/theme/palette';
 
 const ICONS: Record<string, { Icon: React.ComponentType; ActiveIcon: React.ComponentType }> = {
   index: { Icon: MyTaskIcon, ActiveIcon: MyTaskActiveIcon },
@@ -38,7 +39,7 @@ export function TabBar({ state, descriptors, navigation }: TabBarProps) {
         style={[
           tw`h-[70px] flex-row items-center justify-between rounded-full bg-white px-4`,
           {
-            shadowColor: '#000',
+            shadowColor: colors.iconPrimary,
             shadowOpacity: 0.08,
             shadowRadius: 12,
             shadowOffset: { width: 0, height: 4 },
@@ -79,7 +80,7 @@ export function TabBar({ state, descriptors, navigation }: TabBarProps) {
                 <Text
                   fontWeight="normal"
                   fontSize={12}
-                  classN={isFocused ? 'text-black' : 'text-[#9AA0A6]'}>
+                  classN={isFocused ? 'text-black' : `text-[${colors.textMuted}]`}>
                   {label}
                 </Text>
               </Pressable>

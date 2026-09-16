@@ -14,26 +14,26 @@ export function Picker<T>({
 }: React.ComponentProps<typeof RNPicker<T>> & {
   containerStyle?: React.ComponentProps<typeof View>['style'];
 }) {
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
   return (
     <View
       style={[
         tw`ios:shadow-sm ios:shadow-black/5 rounded-md border`,
-        { borderColor: colors.background, backgroundColor: colors.background },
+        { borderColor: systemColors.background, backgroundColor: systemColors.background },
         containerStyle,
       ]}>
       <RNPicker
         mode={mode}
         style={
           style ?? {
-            backgroundColor: colors.root,
+            backgroundColor: systemColors.root,
             borderRadius: 8,
           }
         }
         {...(Platform.OS === 'android'
           ? {
-              dropdownIconColor: dropdownIconColor ?? colors.foreground,
-              dropdownIconRippleColor: dropdownIconRippleColor ?? colors.foreground,
+              dropdownIconColor: dropdownIconColor ?? systemColors.foreground,
+              dropdownIconRippleColor: dropdownIconRippleColor ?? systemColors.foreground,
             }
           : {})}
         {...props}

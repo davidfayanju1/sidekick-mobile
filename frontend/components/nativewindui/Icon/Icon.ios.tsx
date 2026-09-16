@@ -14,7 +14,7 @@ function Icon({
   size = 24,
   ...props
 }: IconProps) {
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
   const symbolName = (name ?? 'questionmark') as ComponentProps<typeof SymbolView>['name'];
 
   return (
@@ -22,7 +22,7 @@ function Icon({
       {...props}
       {...sfSymbol}
       name={symbolName}
-      tintColor={rgbaToHex(color ?? colors.foreground)}
+      tintColor={rgbaToHex(color ?? systemColors.foreground)}
       size={size}
       resizeMode="scaleAspectFit"
     />

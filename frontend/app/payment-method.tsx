@@ -8,8 +8,7 @@ import Form from '@/components/UI/Form';
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
 import { useRoleStore } from '@/store/roleStore';
-
-const ACCENT_TEAL = '#489A9F';
+import { colors } from '@/theme/palette';
 
 export default function PaymentMethod() {
   const setPaymentMethodAdded = useRoleStore((state) => state.setPaymentMethodAdded);
@@ -36,13 +35,13 @@ export default function PaymentMethod() {
           onPress={() => router.back()}
           hitSlop={8}
           style={tw`-ml-2 mt-3 h-10 w-10 items-center justify-center`}>
-          <ChevronLeft size={26} color="#000" />
+          <ChevronLeft size={26} color={colors.iconPrimary} />
         </Pressable>
 
         <Text fontWeight="bold" fontSize={22} classN="mt-2 text-black">
           Add a payment method
         </Text>
-        <Text fontSize={13} classN="mt-1.5 text-[#6B7075]">
+        <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
           Card details are handled securely and only used to fund tasks you post.
         </Text>
 
@@ -98,7 +97,7 @@ export default function PaymentMethod() {
           onPress={handleSave}
           style={[
             tw`mt-8 items-center justify-center rounded-full py-4`,
-            { backgroundColor: ACCENT_TEAL, opacity: canSave ? 1 : 0.5 },
+            { backgroundColor: colors.brand, opacity: canSave ? 1 : 0.5 },
           ]}>
           <Text fontWeight="bold" fontSize={15} classN="text-white">
             Save card

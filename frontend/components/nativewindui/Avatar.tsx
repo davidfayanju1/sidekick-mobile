@@ -17,12 +17,12 @@ function AvatarImage({ style, ...props }: AvatarPrimitive.ImageProps) {
 }
 
 function AvatarFallback({ style, ...props }: AvatarPrimitive.FallbackProps) {
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
   return (
     <AvatarPrimitive.Fallback
       style={[
         tw`h-full w-full items-center justify-center rounded-full`,
-        { backgroundColor: colors.muted },
+        { backgroundColor: systemColors.muted },
         style,
       ]}
       {...props}

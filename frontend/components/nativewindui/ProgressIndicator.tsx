@@ -24,7 +24,7 @@ function ProgressIndicator({
   max?: number;
   getValueLabel?: (value: number, max: number) => string;
 }) {
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
   const max = maxProp ?? DEFAULT_MAX;
   const value = isValidValueNumber(valueProp, max) ? valueProp : 0;
   const progress = useDerivedValue(() => value ?? 0);
@@ -56,12 +56,12 @@ function ProgressIndicator({
       <View
         style={[
           tw`absolute bottom-0 left-0 right-0 top-0 opacity-20`,
-          { backgroundColor: colors.muted },
+          { backgroundColor: systemColors.muted },
         ]}
       />
       <Animated.View
         role="presentation"
-        style={[indicator, tw`h-full`, { backgroundColor: colors.primary }]}
+        style={[indicator, tw`h-full`, { backgroundColor: systemColors.primary }]}
       />
     </View>
   );

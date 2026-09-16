@@ -10,10 +10,7 @@ import BottomSheet from '@/components/UI/BottomSheet';
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
 import { useRoleStore } from '@/store/roleStore';
-
-const ACCENT_TEAL = '#489A9F';
-const BORDER = '#DADADA';
-const MUTED = '#9AA0A6';
+import { colors } from '@/theme/palette';
 
 const ID_TYPES = [
   'National ID (NIN)',
@@ -78,13 +75,13 @@ export default function VerifyId() {
           onPress={() => router.back()}
           hitSlop={8}
           style={tw`-ml-2 mt-3 h-10 w-10 items-center justify-center`}>
-          <ChevronLeft size={26} color="#000" />
+          <ChevronLeft size={26} color={colors.iconPrimary} />
         </Pressable>
 
         <Text fontWeight="bold" fontSize={22} classN="mt-2 text-black">
           Verify your ID
         </Text>
-        <Text fontSize={13} classN="mt-1.5 text-[#6B7075]">
+        <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
           This helps Heroes trust who&rsquo;s showing up. Review usually takes under 24 hours.
         </Text>
 
@@ -94,12 +91,12 @@ export default function VerifyId() {
             onPress={() => setIdTypeSheetVisible(true)}
             style={[
               tw`mt-2 flex-row items-center justify-between rounded-full px-4`,
-              { height: 52, borderWidth: 1, borderColor: BORDER },
+              { height: 52, borderWidth: 1, borderColor: colors.border },
             ]}>
-            <Text fontSize={14} classN={idType ? 'text-black' : `text-[${MUTED}]`}>
+            <Text fontSize={14} classN={idType ? 'text-black' : `text-[${colors.textMuted}]`}>
               {idType ?? 'Select ID type'}
             </Text>
-            <ChevronDown size={18} color={MUTED} />
+            <ChevronDown size={18} color={colors.textMuted} />
           </Pressable>
         </View>
 
@@ -114,10 +111,10 @@ export default function VerifyId() {
               onPress={handleAddPhoto}
               style={[
                 tw`mt-2 h-40 items-center justify-center rounded-2xl`,
-                { borderWidth: 1, borderColor: BORDER },
+                { borderWidth: 1, borderColor: colors.border },
               ]}>
-              <Upload size={22} color="#16181A" />
-              <Text fontSize={12} classN="mt-2 text-[#9AA0A6]">
+              <Upload size={22} color={colors.textPrimary} />
+              <Text fontSize={12} classN={`mt-2 text-[${colors.textMuted}]`}>
                 Tap to upload a clear photo
               </Text>
             </Pressable>
@@ -129,7 +126,7 @@ export default function VerifyId() {
           onPress={handleSubmit}
           style={[
             tw`mt-8 items-center justify-center rounded-full py-4`,
-            { backgroundColor: ACCENT_TEAL, opacity: canSubmit ? 1 : 0.5 },
+            { backgroundColor: colors.brand, opacity: canSubmit ? 1 : 0.5 },
           ]}>
           <Text fontWeight="bold" fontSize={15} classN="text-white">
             Submit for review
@@ -153,12 +150,12 @@ export default function VerifyId() {
                 }}
                 style={[
                   tw`flex-row items-center justify-between rounded-2xl px-4 py-3.5`,
-                  isSelected && { backgroundColor: '#F5F6F7' },
+                  isSelected && { backgroundColor: colors.surface },
                 ]}>
                 <Text fontWeight={isSelected ? 'bold' : 'normal'} fontSize={14} classN="text-black">
                   {item}
                 </Text>
-                {isSelected && <Check size={18} color={ACCENT_TEAL} />}
+                {isSelected && <Check size={18} color={colors.brand} />}
               </Pressable>
             );
           })}

@@ -35,14 +35,10 @@ import { useColorScheme } from '@/lib/useColorScheme';
 import { useRoleStore } from '@/store/roleStore';
 import { useTaskStore } from '@/store/taskStore';
 import { withOpacity } from '@/theme/with-opacity';
+import { colors } from '@/theme/palette';
 
-const ACCENT_TEAL = '#489A9F';
-const BORDER = '#DADADA';
-const MUTED = '#9AA0A6';
-const WARNING = '#D97A55';
 const MAX_PHOTOS = 3;
 const PLATFORM_FEE_PERCENT = 0.5;
-const REJECT_COLOR = '#D1573B';
 
 const AVAILABLE_TASKS: BrowsableTask[] = [
   {
@@ -151,9 +147,9 @@ function FieldLabel({ children }: { children: string }) {
 }
 
 function BrowseTasks() {
-  const { colors } = useColorScheme();
-  const fg = twColor(colors.foreground);
-  const muted = twColor(colors.mutedForeground);
+  const { colors: systemColors } = useColorScheme();
+  const fg = twColor(systemColors.foreground);
+  const muted = twColor(systemColors.mutedForeground);
   const currentTask = useTaskStore((state) => state.sidekickCurrentTask);
   const acceptTask = useTaskStore((state) => state.acceptTask);
   const [queue, setQueue] = React.useState<BrowsableTask[]>(AVAILABLE_TASKS);
@@ -173,14 +169,14 @@ function BrowseTasks() {
       <SafeAreaView
         style={[
           tw`flex-1 items-center justify-center px-8`,
-          { backgroundColor: colors.background },
+          { backgroundColor: systemColors.background },
         ]}>
         <View
           style={[
             tw`h-14 w-14 items-center justify-center rounded-full`,
-            { backgroundColor: withOpacity(ACCENT_TEAL, 0.12) },
+            { backgroundColor: withOpacity(colors.brand, 0.12) },
           ]}>
-          <ClipboardList size={24} color={ACCENT_TEAL} />
+          <ClipboardList size={24} color={colors.brand} />
         </View>
         <Text fontWeight="bold" fontSize={16} classN={`mt-4 text-center text-[${fg}]`}>
           You already have a task in progress
@@ -192,7 +188,7 @@ function BrowseTasks() {
           onPress={() => router.push(`/task/${currentTask.id}`)}
           style={[
             tw`mt-5 items-center justify-center rounded-full px-6 py-3.5`,
-            { backgroundColor: ACCENT_TEAL },
+            { backgroundColor: colors.brand },
           ]}>
           <Text fontWeight="bold" fontSize={14} classN="text-white">
             View current task
@@ -203,7 +199,7 @@ function BrowseTasks() {
   }
 
   return (
-    <SafeAreaView style={[tw`flex-1`, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[tw`flex-1`, { backgroundColor: systemColors.background }]}>
       <View style={tw`px-4 pt-2`}>
         <Text fontWeight="black" fontSize={22} classN={`text-[${fg}]`}>
           Browse tasks nearby
@@ -219,9 +215,9 @@ function BrowseTasks() {
             <View
               style={[
                 tw`h-14 w-14 items-center justify-center rounded-full`,
-                { backgroundColor: withOpacity(ACCENT_TEAL, 0.12) },
+                { backgroundColor: withOpacity(colors.brand, 0.12) },
               ]}>
-              <ClipboardList size={24} color={ACCENT_TEAL} />
+              <ClipboardList size={24} color={colors.brand} />
             </View>
             <Text fontWeight="medium" fontSize={14} classN={`mt-3 text-[${fg}]`}>
               You&rsquo;re all caught up
@@ -252,15 +248,19 @@ function BrowseTasks() {
             onPress={() => activeCardRef.current?.swipeLeft()}
             style={[
               tw`h-14 w-14 items-center justify-center rounded-full`,
-              { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.grey5 },
+              {
+                backgroundColor: systemColors.card,
+                borderWidth: 1,
+                borderColor: systemColors.grey5,
+              },
             ]}>
-            <X size={26} color={REJECT_COLOR} />
+            <X size={26} color={colors.dangerText} />
           </Pressable>
           <Pressable
             onPress={() => activeCardRef.current?.swipeRight()}
             style={[
               tw`h-16 w-16 items-center justify-center rounded-full`,
-              { backgroundColor: ACCENT_TEAL },
+              { backgroundColor: colors.brand },
             ]}>
             <Heart size={26} color="white" fill="white" />
           </Pressable>
@@ -384,18 +384,18 @@ function PostTaskWizard() {
         <View
           style={[
             tw`h-10 w-10 items-center justify-center rounded-full`,
-            { backgroundColor: '#F0DCC8' },
+            { backgroundColor: colors.accentSand },
           ]}>
-          <Text fontWeight="bold" fontSize={15} classN="text-[#B5762E]">
+          <Text fontWeight="bold" fontSize={15} classN={`text-[${colors.pendingText}]`}>
             B
           </Text>
         </View>
         <View
           style={{
-            borderColor: ACCENT_TEAL,
+            borderColor: colors.brand,
             ...tw`h-9 w-9 items-center justify-center rounded-full border`,
           }}>
-          <Text fontWeight="bold" fontSize={13} classN={`text-[${ACCENT_TEAL}]`}>
+          <Text fontWeight="bold" fontSize={13} classN={`text-[${colors.brand}]`}>
             H
           </Text>
         </View>
@@ -411,7 +411,7 @@ function PostTaskWizard() {
             onPress={() => setStep(1)}
             hitSlop={8}
             style={tw`-ml-2 mt-3 h-9 w-9 items-center justify-center`}>
-            <ChevronLeft size={24} color="#16181A" />
+            <ChevronLeft size={24} color={colors.textPrimary} />
           </Pressable>
         )}
 
@@ -421,7 +421,7 @@ function PostTaskWizard() {
           classN={step === 2 ? 'mt-1 text-black' : 'mt-4 text-black'}>
           What do you need?
         </Text>
-        <Text fontSize={13} classN="mt-1 text-[#9AA0A6]">
+        <Text fontSize={13} classN={`mt-1 text-[${colors.textMuted}]`}>
           Post your task for Sidekick to see
         </Text>
 
@@ -433,10 +433,10 @@ function PostTaskWizard() {
                 value={title}
                 onChangeText={setTitle}
                 placeholder="e.g. Deep clean 2-bedroom apartment"
-                placeholderTextColor={MUTED}
+                placeholderTextColor={colors.textMuted}
                 style={[
                   tw`mt-2 rounded-full px-4 text-black`,
-                  { height: 52, borderWidth: 1, borderColor: BORDER },
+                  { height: 52, borderWidth: 1, borderColor: colors.border },
                 ]}
               />
             </View>
@@ -447,12 +447,12 @@ function PostTaskWizard() {
                 onPress={() => setCategorySheetVisible(true)}
                 style={[
                   tw`mt-2 flex-row items-center justify-between rounded-full px-4`,
-                  { height: 52, borderWidth: 1, borderColor: BORDER },
+                  { height: 52, borderWidth: 1, borderColor: colors.border },
                 ]}>
-                <Text fontSize={14} classN={category ? 'text-black' : `text-[${MUTED}]`}>
+                <Text fontSize={14} classN={category ? 'text-black' : `text-[${colors.textMuted}]`}>
                   {category ?? 'Select category'}
                 </Text>
-                <ChevronDown size={18} color={MUTED} />
+                <ChevronDown size={18} color={colors.textMuted} />
               </Pressable>
             </View>
 
@@ -462,11 +462,16 @@ function PostTaskWizard() {
                 value={description}
                 onChangeText={setDescription}
                 placeholder={'Describe what needs to be done, any requirements\nand when...'}
-                placeholderTextColor={MUTED}
+                placeholderTextColor={colors.textMuted}
                 multiline
                 style={[
                   tw`mt-2 rounded-2xl p-4 text-black`,
-                  { minHeight: 100, borderWidth: 1, borderColor: BORDER, textAlignVertical: 'top' },
+                  {
+                    minHeight: 100,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    textAlignVertical: 'top',
+                  },
                 ]}
               />
             </View>
@@ -495,12 +500,12 @@ function PostTaskWizard() {
                       onPress={isNextSlot ? handleAddPhoto : undefined}
                       style={[
                         tw`h-24 flex-1 items-center justify-center rounded-2xl`,
-                        { borderWidth: 1, borderColor: BORDER },
+                        { borderWidth: 1, borderColor: colors.border },
                       ]}>
                       {isNextSlot ? (
-                        <Upload size={20} color="#16181A" />
+                        <Upload size={20} color={colors.textPrimary} />
                       ) : (
-                        <ImageIcon size={20} color="#D9DCE0" />
+                        <ImageIcon size={20} color={colors.iconPlaceholder} />
                       )}
                     </Pressable>
                   );
@@ -514,15 +519,15 @@ function PostTaskWizard() {
                 value={budget}
                 onChangeText={(text) => setBudget(text.replace(/[^0-9]/g, ''))}
                 placeholder="0"
-                placeholderTextColor={MUTED}
+                placeholderTextColor={colors.textMuted}
                 keyboardType="number-pad"
                 style={[
                   tw`mt-2 rounded-full px-4 text-black`,
-                  { height: 52, borderWidth: 1, borderColor: BORDER },
+                  { height: 52, borderWidth: 1, borderColor: colors.border },
                 ]}
               />
               {showBudgetWarning && (
-                <Text fontSize={12} classN={`mt-1.5 text-[${WARNING}]`}>
+                <Text fontSize={12} classN={`mt-1.5 text-[${colors.warning}]`}>
                   Budget under ₦500 rarely attract sidekick interest
                 </Text>
               )}
@@ -533,7 +538,7 @@ function PostTaskWizard() {
               onPress={() => setStep(2)}
               style={[
                 tw`mt-6 items-center justify-center rounded-full py-4`,
-                { backgroundColor: ACCENT_TEAL, opacity: canContinueStep1 ? 1 : 0.5 },
+                { backgroundColor: colors.brand, opacity: canContinueStep1 ? 1 : 0.5 },
               ]}>
               <Text fontWeight="bold" fontSize={15} classN="text-white">
                 Continue
@@ -550,28 +555,28 @@ function PostTaskWizard() {
                 value={from}
                 onChangeText={setFrom}
                 placeholder="From"
-                placeholderTextColor={MUTED}
+                placeholderTextColor={colors.textMuted}
                 style={[
                   tw`mt-2 rounded-full px-4 text-black`,
-                  { height: 52, borderWidth: 1, borderColor: BORDER },
+                  { height: 52, borderWidth: 1, borderColor: colors.border },
                 ]}
               />
               <TextInput
                 value={to}
                 onChangeText={setTo}
                 placeholder="To"
-                placeholderTextColor={MUTED}
+                placeholderTextColor={colors.textMuted}
                 style={[
                   tw`mt-3 rounded-full px-4 text-black`,
-                  { height: 52, borderWidth: 1, borderColor: BORDER },
+                  { height: 52, borderWidth: 1, borderColor: colors.border },
                 ]}
               />
               <View
                 style={[
                   tw`mt-3 items-center justify-center rounded-2xl`,
-                  { height: 160, borderWidth: 1, borderColor: BORDER },
+                  { height: 160, borderWidth: 1, borderColor: colors.border },
                 ]}>
-                <ImageOff size={26} color="#D9DCE0" />
+                <ImageOff size={26} color={colors.iconPlaceholder} />
               </View>
             </View>
 
@@ -581,14 +586,14 @@ function PostTaskWizard() {
                 onPress={openDateTimePicker}
                 style={[
                   tw`mt-2 flex-row items-center justify-between rounded-full px-4`,
-                  { height: 52, borderWidth: 1, borderColor: BORDER },
+                  { height: 52, borderWidth: 1, borderColor: colors.border },
                 ]}>
-                <Text fontSize={14} classN={dateTime ? 'text-black' : `text-[${MUTED}]`}>
+                <Text fontSize={14} classN={dateTime ? 'text-black' : `text-[${colors.textMuted}]`}>
                   {dateTime
                     ? `${formatDateLabel(dateTime)} • ${formatTimeLabel(dateTime)}`
                     : 'Select date and time'}
                 </Text>
-                <Calendar size={18} color={MUTED} />
+                <Calendar size={18} color={colors.textMuted} />
               </Pressable>
             </View>
 
@@ -597,7 +602,7 @@ function PostTaskWizard() {
               onPress={() => setActiveSheet('summary')}
               style={[
                 tw`mt-6 items-center justify-center rounded-full py-4`,
-                { backgroundColor: ACCENT_TEAL, opacity: canContinueStep2 ? 1 : 0.5 },
+                { backgroundColor: colors.brand, opacity: canContinueStep2 ? 1 : 0.5 },
               ]}>
               <Text fontWeight="bold" fontSize={15} classN="text-white">
                 Continue
@@ -623,12 +628,12 @@ function PostTaskWizard() {
                 }}
                 style={[
                   tw`flex-row items-center justify-between rounded-2xl px-4 py-3.5`,
-                  isSelected && { backgroundColor: '#F5F6F7' },
+                  isSelected && { backgroundColor: colors.surface },
                 ]}>
                 <Text fontWeight={isSelected ? 'bold' : 'normal'} fontSize={14} classN="text-black">
                   {item}
                 </Text>
-                {isSelected && <Check size={18} color={ACCENT_TEAL} />}
+                {isSelected && <Check size={18} color={colors.brand} />}
               </Pressable>
             );
           })}
@@ -656,7 +661,7 @@ function PostTaskWizard() {
               }}
               style={[
                 tw`items-center justify-center rounded-full py-4`,
-                { backgroundColor: ACCENT_TEAL },
+                { backgroundColor: colors.brand },
               ]}>
               <Text fontWeight="bold" fontSize={15} classN="text-white">
                 Set date & time

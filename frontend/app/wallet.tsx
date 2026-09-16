@@ -12,8 +12,7 @@ import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
 import { useRoleStore } from '@/store/roleStore';
 import { withOpacity } from '@/theme/with-opacity';
-
-const ACCENT_TEAL = '#489A9F';
+import { colors } from '@/theme/palette';
 
 function sumBy(
   transactions: typeof HERO_TRANSACTIONS,
@@ -23,11 +22,11 @@ function sumBy(
 }
 
 export default function Wallet() {
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
   const role = useRoleStore((state) => state.role);
   const bankDetailsAdded = useRoleStore((state) => state.bankDetailsAdded);
   const isSidekick = role === 'sidekick';
-  const fg = twColor(colors.foreground);
+  const fg = twColor(systemColors.foreground);
 
   const [withdrawSheetVisible, setWithdrawSheetVisible] = React.useState(false);
   const [withdrawn, setWithdrawn] = React.useState(false);
@@ -55,11 +54,11 @@ export default function Wallet() {
 
   return (
     <SafeAreaView
-      style={[tw`flex-1`, { backgroundColor: colors.background }]}
+      style={[tw`flex-1`, { backgroundColor: systemColors.background }]}
       edges={['top', 'bottom']}>
       <View style={tw`flex-row items-center gap-3 px-4 pb-3 pt-2`}>
         <Pressable onPress={() => router.back()} hitSlop={8}>
-          <ChevronLeft size={24} color={colors.foreground} />
+          <ChevronLeft size={24} color={systemColors.foreground} />
         </Pressable>
         <Text fontWeight="bold" fontSize={16} classN={`text-[${fg}]`}>
           Wallet
@@ -70,7 +69,7 @@ export default function Wallet() {
         style={tw`flex-1 px-4`}
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}>
-        <View style={[tw`mt-2 rounded-3xl p-5`, { backgroundColor: ACCENT_TEAL }]}>
+        <View style={[tw`mt-2 rounded-3xl p-5`, { backgroundColor: colors.brand }]}>
           <View style={tw`flex-row items-center gap-2`}>
             <WalletIcon size={16} color="white" />
             <Text fontSize={12} classN="text-white opacity-80">
@@ -84,7 +83,7 @@ export default function Wallet() {
           <View
             style={[
               tw`mt-4 flex-row items-center justify-between rounded-2xl px-4 py-3`,
-              { backgroundColor: withOpacity('#FFFFFF', 0.14) },
+              { backgroundColor: withOpacity(colors.surfaceWhite, 0.14) },
             ]}>
             <Text fontSize={12} classN="text-white opacity-80">
               {isSidekick ? 'Pending Payout' : 'In Escrow'}
@@ -100,8 +99,8 @@ export default function Wallet() {
               tw`mt-4 flex-row items-center justify-center gap-2 rounded-full py-3.5`,
               { backgroundColor: 'white' },
             ]}>
-            {!isSidekick && <Plus size={16} color={ACCENT_TEAL} />}
-            <Text fontWeight="bold" fontSize={14} classN={`text-[${twColor(ACCENT_TEAL)}]`}>
+            {!isSidekick && <Plus size={16} color={colors.brand} />}
+            <Text fontWeight="bold" fontSize={14} classN={`text-[${twColor(colors.brand)}]`}>
               {isSidekick ? 'Withdraw to bank' : 'Add funds'}
             </Text>
           </Pressable>
@@ -113,10 +112,10 @@ export default function Wallet() {
           </Text>
           <Pressable onPress={() => router.push('/payment-history')}>
             <View style={tw`flex-row items-center gap-0.5`}>
-              <Text fontSize={12} classN={`text-[${twColor(ACCENT_TEAL)}]`}>
+              <Text fontSize={12} classN={`text-[${twColor(colors.brand)}]`}>
                 See all
               </Text>
-              <ChevronRight size={14} color={ACCENT_TEAL} />
+              <ChevronRight size={14} color={colors.brand} />
             </View>
           </Pressable>
         </View>
@@ -134,14 +133,14 @@ export default function Wallet() {
             <View
               style={[
                 tw`h-14 w-14 items-center justify-center rounded-full`,
-                { backgroundColor: '#2F9E56' },
+                { backgroundColor: colors.success },
               ]}>
               <Check size={26} color="white" strokeWidth={3} />
             </View>
             <Text fontWeight="black" fontSize={17} classN="mt-4 text-black">
               Withdrawal started
             </Text>
-            <Text fontSize={13} classN="mt-1.5 text-center text-[#6B7075]">
+            <Text fontSize={13} classN={`mt-1.5 text-center text-[${colors.textSecondary}]`}>
               {formatNaira(availableBalance)} is on its way to your bank account. This usually takes
               up to 24 hours.
             </Text>
@@ -149,7 +148,7 @@ export default function Wallet() {
               onPress={() => setWithdrawSheetVisible(false)}
               style={[
                 tw`mt-5 w-full items-center justify-center rounded-full py-4`,
-                { backgroundColor: ACCENT_TEAL },
+                { backgroundColor: colors.brand },
               ]}>
               <Text fontWeight="bold" fontSize={15} classN="text-white">
                 Done
@@ -161,14 +160,14 @@ export default function Wallet() {
             <Text fontWeight="black" fontSize={19} classN="text-black">
               Withdraw to bank
             </Text>
-            <Text fontSize={13} classN="mt-1.5 text-[#6B7075]">
+            <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
               {formatNaira(availableBalance)} will be sent to your linked bank account.
             </Text>
             <Pressable
               onPress={() => setWithdrawn(true)}
               style={[
                 tw`mt-5 items-center justify-center rounded-full py-4`,
-                { backgroundColor: ACCENT_TEAL },
+                { backgroundColor: colors.brand },
               ]}>
               <Text fontWeight="bold" fontSize={15} classN="text-white">
                 Confirm withdrawal

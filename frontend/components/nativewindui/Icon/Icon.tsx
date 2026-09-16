@@ -17,8 +17,8 @@ function Icon({
   size = 24,
   ...props
 }: IconProps) {
-  const { colors } = useColorScheme();
-  const defaultColor = colors.foreground;
+  const { colors: systemColors } = useColorScheme();
+  const defaultColor = systemColors.foreground;
 
   if (materialCommunityIcon) {
     return (

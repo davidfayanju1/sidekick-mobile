@@ -31,6 +31,7 @@ import { useColorScheme } from '@/lib/useColorScheme';
 import { useOutstandingStepsCount, useRoleStore, type UserRole } from '@/store/roleStore';
 import { useTaskStore } from '@/store/taskStore';
 import { withOpacity } from '@/theme/with-opacity';
+import { colors } from '@/theme/palette';
 
 export const POSTED_TASKS: Task[] = [
   {
@@ -101,9 +102,9 @@ function TaskCard({
   onPress?: () => void;
   showLiveBadge?: boolean;
 }) {
-  const { colors } = useColorScheme();
-  const fg = twColor(colors.foreground);
-  const muted = twColor(colors.mutedForeground);
+  const { colors: systemColors } = useColorScheme();
+  const fg = twColor(systemColors.foreground);
+  const muted = twColor(systemColors.mutedForeground);
   const { color: categoryColor, icon: CategoryIcon } = getCategoryMeta(task.category);
 
   return (
@@ -112,7 +113,7 @@ function TaskCard({
       disabled={!onPress}
       style={[
         tw`mt-4 flex-row overflow-hidden rounded-2xl`,
-        { backgroundColor: colors.card },
+        { backgroundColor: systemColors.card },
         CARD_SHADOW,
       ]}>
       <View style={{ width: 4, backgroundColor: categoryColor }} />
@@ -138,16 +139,16 @@ function TaskCard({
         </Text>
 
         {task.offersText && (
-          <View style={[tw`mt-3 rounded-xl px-3 py-2`, { backgroundColor: '#DCF5E3' }]}>
-            <Text fontSize={12} classN="text-[#2F9E56]">
+          <View style={[tw`mt-3 rounded-xl px-3 py-2`, { backgroundColor: colors.successBg }]}>
+            <Text fontSize={12} classN={`text-[${colors.success}]`}>
               {task.offersText}
             </Text>
           </View>
         )}
 
         {task.disputeText && (
-          <View style={[tw`mt-3 rounded-xl px-3 py-2`, { backgroundColor: '#FBE2DC' }]}>
-            <Text fontSize={12} classN="text-[#D1573B]">
+          <View style={[tw`mt-3 rounded-xl px-3 py-2`, { backgroundColor: colors.disputeBg }]}>
+            <Text fontSize={12} classN={`text-[${colors.dangerText}]`}>
               {task.disputeText}
             </Text>
           </View>
@@ -159,9 +160,9 @@ function TaskCard({
           <View
             style={[
               tw`mt-3 flex-row items-center justify-between pt-3`,
-              { borderTopWidth: 1, borderTopColor: colors.grey5 },
+              { borderTopWidth: 1, borderTopColor: systemColors.grey5 },
             ]}>
-            <Text fontSize={12} classN="text-[#D97A55]">
+            <Text fontSize={12} classN={`text-[${colors.warning}]`}>
               {task.payIn}
             </Text>
             <Text fontWeight="bold" fontSize={15} classN={`text-[${fg}]`}>
@@ -183,12 +184,13 @@ function StatTile({
   label: string;
   value: string;
 }) {
-  const { colors } = useColorScheme();
-  const fg = twColor(colors.foreground);
-  const muted = twColor(colors.mutedForeground);
+  const { colors: systemColors } = useColorScheme();
+  const fg = twColor(systemColors.foreground);
+  const muted = twColor(systemColors.mutedForeground);
 
   return (
-    <View style={[tw`flex-1 rounded-2xl p-3.5`, { backgroundColor: colors.card }, CARD_SHADOW]}>
+    <View
+      style={[tw`flex-1 rounded-2xl p-3.5`, { backgroundColor: systemColors.card }, CARD_SHADOW]}>
       <View
         style={[
           tw`h-8 w-8 items-center justify-center rounded-full`,
@@ -217,7 +219,7 @@ function PostTaskBanner() {
       <View
         style={[
           tw`h-11 w-11 items-center justify-center rounded-2xl`,
-          { backgroundColor: withOpacity('#FFFFFF', 0.18) },
+          { backgroundColor: withOpacity(colors.surfaceWhite, 0.18) },
         ]}>
         <Plus size={22} color="white" />
       </View>
@@ -235,8 +237,8 @@ function PostTaskBanner() {
 }
 
 function QuickCategories() {
-  const { colors } = useColorScheme();
-  const fg = twColor(colors.foreground);
+  const { colors: systemColors } = useColorScheme();
+  const fg = twColor(systemColors.foreground);
 
   return (
     <View style={tw`mt-5`}>
@@ -272,12 +274,12 @@ function QuickCategories() {
 export default function Dashboard() {
   const { role, hasChosenRole, setRole } = useRoleStore();
   const outstandingSteps = useOutstandingStepsCount();
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
   const sidekickCurrentTask = useTaskStore((state) => state.sidekickCurrentTask);
   const [activeSheet, setActiveSheet] = React.useState<'offers' | null>(null);
   const isSidekick = role === 'sidekick';
-  const fg = twColor(colors.foreground);
-  const muted = twColor(colors.mutedForeground);
+  const fg = twColor(systemColors.foreground);
+  const muted = twColor(systemColors.mutedForeground);
   const tasks = isSidekick ? (sidekickCurrentTask ? [sidekickCurrentTask] : []) : POSTED_TASKS;
   const firstName = 'Bisola';
 
@@ -299,15 +301,15 @@ export default function Dashboard() {
   };
 
   return (
-    <SafeAreaView style={[tw`flex-1`, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[tw`flex-1`, { backgroundColor: systemColors.background }]}>
       <View style={tw`flex-row items-center justify-between px-4 pt-2`}>
         <Pressable style={tw`flex-row items-center gap-2`}>
           <View
             style={[
               tw`h-10 w-10 items-center justify-center rounded-full`,
-              { backgroundColor: '#F0DCC8' },
+              { backgroundColor: colors.accentSand },
             ]}>
-            <Text fontWeight="bold" fontSize={15} classN="text-[#B5762E]">
+            <Text fontWeight="bold" fontSize={15} classN={`text-[${colors.pendingText}]`}>
               B
             </Text>
           </View>
@@ -316,7 +318,7 @@ export default function Dashboard() {
               <Text fontWeight="bold" fontSize={15} classN={`text-[${fg}]`}>
                 Bisola Soks
               </Text>
-              <ChevronRight size={16} color={colors.mutedForeground} />
+              <ChevronRight size={16} color={systemColors.mutedForeground} />
             </View>
             <Text fontSize={12} classN={`text-[${muted}]`}>
               Lagos Island
@@ -368,14 +370,14 @@ export default function Dashboard() {
             onPress={() => router.push('/get-started')}
             style={[
               tw`mt-5 flex-row items-center gap-3 rounded-2xl p-3.5`,
-              { backgroundColor: '#F5E6D3' },
+              { backgroundColor: colors.pendingBg },
             ]}>
-            <TriangleAlert size={18} color="#B5762E" />
-            <Text fontWeight="medium" fontSize={13} classN="flex-1 text-[#B5762E]">
+            <TriangleAlert size={18} color={colors.pendingText} />
+            <Text fontWeight="medium" fontSize={13} classN={`flex-1 text-[${colors.pendingText}]`}>
               {outstandingSteps} step{outstandingSteps > 1 ? 's' : ''} left to finish setting up
               your {isSidekick ? 'Sidekick' : 'Hero'} account
             </Text>
-            <ChevronRight size={16} color="#B5762E" />
+            <ChevronRight size={16} color={colors.pendingText} />
           </Pressable>
         )}
 

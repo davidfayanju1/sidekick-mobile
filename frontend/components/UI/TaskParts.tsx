@@ -14,12 +14,13 @@ import { View } from 'react-native';
 import Text from '@/components/UI/Text';
 import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
+import { colors } from '@/theme/palette';
 
-export const ACCENT_TEAL = '#489A9F';
-export const CATEGORY_COLOR = '#D1573B';
+export const ACCENT_TEAL = colors.brand;
+export const CATEGORY_COLOR = colors.dangerText;
 
 export const CARD_SHADOW = {
-  shadowColor: '#000',
+  shadowColor: colors.iconPrimary,
   shadowOpacity: 0.06,
   shadowRadius: 8,
   shadowOffset: { width: 0, height: 2 },
@@ -64,11 +65,11 @@ export type BrowsableTask = {
 };
 
 export const STATUS_STYLES: Record<TaskStatus, { bg: string; text: string }> = {
-  matched: { bg: '#DCEDEE', text: ACCENT_TEAL },
-  in_progress: { bg: '#F5E6D3', text: '#B5762E' },
-  offers: { bg: '#DCF5E3', text: '#2F9E56' },
-  scheduled: { bg: '#DCE8FB', text: '#3B6FD1' },
-  dispute: { bg: '#FBE2DC', text: '#D1573B' },
+  matched: { bg: colors.brandTintAlt, text: ACCENT_TEAL },
+  in_progress: { bg: colors.pendingBg, text: colors.pendingText },
+  offers: { bg: colors.successBg, text: colors.success },
+  scheduled: { bg: colors.scheduledBg, text: colors.scheduledText },
+  dispute: { bg: colors.disputeBg, text: colors.dangerText },
 };
 
 export const STEPS = ['Posted', 'Matched', 'In Progress', 'Confirm', 'Payment'];
@@ -79,10 +80,10 @@ export const QUICK_CATEGORIES: { name: string; label: string; color: string; ico
   [
     { name: 'Cleaning', label: 'Cleaning', color: ACCENT_TEAL, icon: BrushCleaning },
     { name: 'Delivery', label: 'Delivery', color: CATEGORY_COLOR, icon: Package },
-    { name: 'Tech Help', label: 'Tech Help', color: '#3B6FD1', icon: Laptop },
-    { name: 'Moving & Assembly', label: 'Moving', color: '#B5762E', icon: Truck },
-    { name: 'Handyman', label: 'Handyman', color: '#8B5CF6', icon: Hammer },
-    { name: 'Personal Errands', label: 'Errands', color: '#2F9E56', icon: ShoppingBag },
+    { name: 'Tech Help', label: 'Tech Help', color: colors.scheduledText, icon: Laptop },
+    { name: 'Moving & Assembly', label: 'Moving', color: colors.pendingText, icon: Truck },
+    { name: 'Handyman', label: 'Handyman', color: colors.accentPurple, icon: Hammer },
+    { name: 'Personal Errands', label: 'Errands', color: colors.success, icon: ShoppingBag },
   ];
 
 const DEFAULT_CATEGORY_META: CategoryMeta = { color: CATEGORY_COLOR, icon: Sparkles };
@@ -143,8 +144,8 @@ export function StatusPill({ status, label }: { status: TaskStatus; label: strin
 }
 
 export function ProgressTracker({ currentStep }: { currentStep: number }) {
-  const { colors } = useColorScheme();
-  const muted = twColor(colors.mutedForeground);
+  const { colors: systemColors } = useColorScheme();
+  const muted = twColor(systemColors.mutedForeground);
 
   return (
     <View style={tw`mt-3`}>
@@ -157,8 +158,16 @@ export function ProgressTracker({ currentStep }: { currentStep: number }) {
                 index < currentStep
                   ? { backgroundColor: ACCENT_TEAL }
                   : index === currentStep
-                    ? { borderWidth: 2, borderColor: ACCENT_TEAL, backgroundColor: colors.card }
-                    : { borderWidth: 1.5, borderColor: colors.grey4, backgroundColor: colors.card },
+                    ? {
+                        borderWidth: 2,
+                        borderColor: ACCENT_TEAL,
+                        backgroundColor: systemColors.card,
+                      }
+                    : {
+                        borderWidth: 1.5,
+                        borderColor: systemColors.grey4,
+                        backgroundColor: systemColors.card,
+                      },
               ]}>
               {index < currentStep ? (
                 <View style={tw`h-1.5 w-1.5 rounded-full bg-white`} />
@@ -170,7 +179,7 @@ export function ProgressTracker({ currentStep }: { currentStep: number }) {
               <View
                 style={[
                   tw`h-px flex-1`,
-                  { backgroundColor: index < currentStep ? ACCENT_TEAL : colors.grey4 },
+                  { backgroundColor: index < currentStep ? ACCENT_TEAL : systemColors.grey4 },
                 ]}
               />
             )}

@@ -24,11 +24,7 @@ import { useColorScheme } from '@/lib/useColorScheme';
 import { useOutstandingStepsCount, useRoleStore, type UserRole } from '@/store/roleStore';
 import type { ThemePreference } from '@/store/themeStore';
 import { withOpacity } from '@/theme/with-opacity';
-
-const ACCENT_TEAL = '#489A9F';
-const ACCENT_ORANGE = '#D1704F';
-const DANGER = '#C94B34';
-const SUCCESS = '#2F9E56';
+import { colors } from '@/theme/palette';
 
 const ROLE_LABEL: Record<UserRole, string> = { hero: 'Hero', sidekick: 'Sidekick' };
 const ROLE_DESCRIPTION: Record<UserRole, string> = {
@@ -50,7 +46,7 @@ const MENU_ITEMS: { icon: typeof Wallet; label: string; onPress?: () => void }[]
 ];
 
 export default function Profile() {
-  const { colors, preference, setPreference } = useColorScheme();
+  const { colors: systemColors, preference, setPreference } = useColorScheme();
   const role = useRoleStore((state) => state.role);
   const setRole = useRoleStore((state) => state.setRole);
   const paymentMethodAdded = useRoleStore((state) => state.paymentMethodAdded);
@@ -59,8 +55,8 @@ export default function Profile() {
   const outstandingSteps = useOutstandingStepsCount();
   const [switchSheetVisible, setSwitchSheetVisible] = React.useState(false);
 
-  const fg = twColor(colors.foreground);
-  const muted = twColor(colors.mutedForeground);
+  const fg = twColor(systemColors.foreground);
+  const muted = twColor(systemColors.mutedForeground);
 
   const isSidekick = role === 'sidekick';
   const otherRole: UserRole = isSidekick ? 'hero' : 'sidekick';
@@ -98,7 +94,7 @@ export default function Profile() {
       : [];
 
   return (
-    <SafeAreaView style={[tw`flex-1`, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[tw`flex-1`, { backgroundColor: systemColors.background }]}>
       <ScrollView
         style={tw`flex-1 px-4`}
         contentContainerStyle={{ paddingBottom: 110 }}
@@ -107,9 +103,9 @@ export default function Profile() {
           <View
             style={[
               tw`h-14 w-14 items-center justify-center rounded-full`,
-              { backgroundColor: '#F0DCC8' },
+              { backgroundColor: colors.accentSand },
             ]}>
-            <Text fontWeight="bold" fontSize={18} classN="text-[#B5762E]">
+            <Text fontWeight="bold" fontSize={18} classN={`text-[${colors.pendingText}]`}>
               B
             </Text>
           </View>
@@ -121,9 +117,9 @@ export default function Profile() {
               <View
                 style={[
                   tw`mt-1 self-start rounded-full px-2.5 py-0.5`,
-                  { backgroundColor: withOpacity(ACCENT_TEAL, 0.14) },
+                  { backgroundColor: withOpacity(colors.brand, 0.14) },
                 ]}>
-                <Text fontWeight="medium" fontSize={11} classN={`text-[${twColor(ACCENT_TEAL)}]`}>
+                <Text fontWeight="medium" fontSize={11} classN={`text-[${twColor(colors.brand)}]`}>
                   {ROLE_LABEL[role]}
                 </Text>
               </View>
@@ -137,7 +133,11 @@ export default function Profile() {
         <View
           style={[
             tw`mt-2.5 flex-row rounded-2xl p-1`,
-            { backgroundColor: colors.grey6, borderWidth: 1, borderColor: colors.grey5 },
+            {
+              backgroundColor: systemColors.grey6,
+              borderWidth: 1,
+              borderColor: systemColors.grey5,
+            },
           ]}>
           {APPEARANCE_OPTIONS.map(({ value, label, icon: Icon }) => {
             const isActive = preference === value;
@@ -147,9 +147,9 @@ export default function Profile() {
                 onPress={() => setPreference(value)}
                 style={[
                   tw`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-2.5`,
-                  isActive && { backgroundColor: ACCENT_TEAL },
+                  isActive && { backgroundColor: colors.brand },
                 ]}>
-                <Icon size={15} color={isActive ? 'white' : colors.mutedForeground} />
+                <Icon size={15} color={isActive ? 'white' : systemColors.mutedForeground} />
                 <Text
                   fontWeight="medium"
                   fontSize={12}
@@ -169,7 +169,11 @@ export default function Profile() {
             <View
               style={[
                 tw`mt-2.5 rounded-2xl p-4`,
-                { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.grey5 },
+                {
+                  backgroundColor: systemColors.card,
+                  borderWidth: 1,
+                  borderColor: systemColors.grey5,
+                },
               ]}>
               <Text fontWeight="bold" fontSize={14} classN={`text-[${fg}]`}>
                 You&rsquo;re a {ROLE_LABEL[role]}
@@ -181,7 +185,7 @@ export default function Profile() {
                 onPress={() => setSwitchSheetVisible(true)}
                 style={[
                   tw`mt-3.5 items-center justify-center rounded-full py-3`,
-                  { backgroundColor: ACCENT_ORANGE },
+                  { backgroundColor: colors.accentOrangeDeep },
                 ]}>
                 <Text fontWeight="bold" fontSize={13} classN="text-white">
                   Switch to {ROLE_LABEL[otherRole]}
@@ -198,7 +202,7 @@ export default function Profile() {
                 Account setup
               </Text>
               {outstandingSteps > 0 && (
-                <Text fontSize={11} classN={`text-[${twColor('#B5762E')}]`}>
+                <Text fontSize={11} classN={`text-[${twColor('${colors.pendingText}')}]`}>
                   {outstandingSteps} left
                 </Text>
               )}
@@ -210,16 +214,20 @@ export default function Profile() {
                   onPress={onPress}
                   style={[
                     tw`flex-row items-center gap-3 rounded-2xl p-3.5`,
-                    { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.grey5 },
+                    {
+                      backgroundColor: systemColors.card,
+                      borderWidth: 1,
+                      borderColor: systemColors.grey5,
+                    },
                   ]}>
-                  <Icon size={18} color={done ? SUCCESS : colors.mutedForeground} />
+                  <Icon size={18} color={done ? colors.success : systemColors.mutedForeground} />
                   <Text fontWeight="medium" fontSize={13} classN={`flex-1 text-[${fg}]`}>
                     {title}
                   </Text>
                   <Text fontSize={11} classN={`text-[${muted}]`}>
                     {done ? 'Done' : pending ? 'Pending' : 'Add'}
                   </Text>
-                  <ChevronRight size={16} color={colors.mutedForeground} />
+                  <ChevronRight size={16} color={systemColors.mutedForeground} />
                 </Pressable>
               ))}
             </View>
@@ -232,7 +240,7 @@ export default function Profile() {
         <View
           style={[
             tw`mt-2.5 rounded-2xl px-1`,
-            { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.grey5 },
+            { backgroundColor: systemColors.card, borderWidth: 1, borderColor: systemColors.grey5 },
           ]}>
           {MENU_ITEMS.map(({ icon: Icon, label, onPress }, index) => (
             <Pressable
@@ -242,14 +250,14 @@ export default function Profile() {
                 tw`flex-row items-center gap-3 px-3.5 py-3.5`,
                 index < MENU_ITEMS.length - 1 && {
                   borderBottomWidth: 1,
-                  borderBottomColor: colors.grey5,
+                  borderBottomColor: systemColors.grey5,
                 },
               ]}>
-              <Icon size={18} color={colors.mutedForeground} />
+              <Icon size={18} color={systemColors.mutedForeground} />
               <Text fontSize={14} classN={`flex-1 text-[${fg}]`}>
                 {label}
               </Text>
-              <ChevronRight size={16} color={colors.mutedForeground} />
+              <ChevronRight size={16} color={systemColors.mutedForeground} />
             </Pressable>
           ))}
         </View>
@@ -258,10 +266,10 @@ export default function Profile() {
           onPress={() => router.replace('/sign-in')}
           style={[
             tw`mt-6 flex-row items-center justify-center gap-2 rounded-2xl py-3.5`,
-            { borderWidth: 1, borderColor: colors.grey5 },
+            { borderWidth: 1, borderColor: systemColors.grey5 },
           ]}>
-          <LogOut size={16} color={DANGER} />
-          <Text fontWeight="bold" fontSize={13} classN={`text-[${twColor(DANGER)}]`}>
+          <LogOut size={16} color={colors.danger} />
+          <Text fontWeight="bold" fontSize={13} classN={`text-[${twColor(colors.danger)}]`}>
             Sign Out
           </Text>
         </Pressable>

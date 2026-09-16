@@ -9,8 +9,8 @@ import { CARD_SHADOW } from '@/components/UI/TaskParts';
 import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
 import { withOpacity } from '@/theme/with-opacity';
+import { colors } from '@/theme/palette';
 
-const ACCENT_TEAL = '#489A9F';
 const REFERRAL_CODE = 'BISOLA200';
 
 const REWARDS = [
@@ -19,9 +19,9 @@ const REWARDS = [
 ];
 
 export default function ReferAFriend() {
-  const { colors } = useColorScheme();
-  const fg = twColor(colors.foreground);
-  const muted = twColor(colors.mutedForeground);
+  const { colors: systemColors } = useColorScheme();
+  const fg = twColor(systemColors.foreground);
+  const muted = twColor(systemColors.mutedForeground);
   const [copied, setCopied] = React.useState(false);
 
   const handleCopy = () => {
@@ -37,11 +37,11 @@ export default function ReferAFriend() {
 
   return (
     <SafeAreaView
-      style={[tw`flex-1`, { backgroundColor: colors.background }]}
+      style={[tw`flex-1`, { backgroundColor: systemColors.background }]}
       edges={['top', 'bottom']}>
       <View style={tw`flex-row items-center gap-3 px-4 pb-3 pt-2`}>
         <Pressable onPress={() => router.back()} hitSlop={8}>
-          <ChevronLeft size={24} color={colors.foreground} />
+          <ChevronLeft size={24} color={systemColors.foreground} />
         </Pressable>
         <Text fontWeight="bold" fontSize={16} classN={`text-[${fg}]`}>
           Refer a Friend
@@ -56,9 +56,9 @@ export default function ReferAFriend() {
           <View
             style={[
               tw`h-16 w-16 items-center justify-center rounded-full`,
-              { backgroundColor: withOpacity(ACCENT_TEAL, 0.12) },
+              { backgroundColor: withOpacity(colors.brand, 0.12) },
             ]}>
-            <Gift size={28} color={ACCENT_TEAL} />
+            <Gift size={28} color={colors.brand} />
           </View>
           <Text fontWeight="black" fontSize={20} classN={`mt-4 text-center text-[${fg}]`}>
             Invite friends, earn rewards
@@ -71,13 +71,13 @@ export default function ReferAFriend() {
         <View
           style={[
             tw`mt-6 flex-row items-center justify-between rounded-2xl p-4`,
-            { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.grey5 },
+            { backgroundColor: systemColors.card, borderWidth: 1, borderColor: systemColors.grey5 },
           ]}>
           <View>
             <Text fontSize={11} classN={`text-[${muted}]`}>
               Your referral code
             </Text>
-            <Text fontWeight="black" fontSize={20} classN={`mt-1 text-[${twColor(ACCENT_TEAL)}]`}>
+            <Text fontWeight="black" fontSize={20} classN={`mt-1 text-[${twColor(colors.brand)}]`}>
               {REFERRAL_CODE}
             </Text>
           </View>
@@ -85,10 +85,10 @@ export default function ReferAFriend() {
             onPress={handleCopy}
             style={[
               tw`flex-row items-center gap-1.5 rounded-full px-3.5 py-2`,
-              { backgroundColor: withOpacity(ACCENT_TEAL, 0.12) },
+              { backgroundColor: withOpacity(colors.brand, 0.12) },
             ]}>
-            <Copy size={14} color={ACCENT_TEAL} />
-            <Text fontWeight="medium" fontSize={12} classN={`text-[${twColor(ACCENT_TEAL)}]`}>
+            <Copy size={14} color={colors.brand} />
+            <Text fontWeight="medium" fontSize={12} classN={`text-[${twColor(colors.brand)}]`}>
               {copied ? 'Copied!' : 'Copy'}
             </Text>
           </Pressable>
@@ -98,7 +98,7 @@ export default function ReferAFriend() {
           onPress={handleShare}
           style={[
             tw`mt-3 items-center justify-center rounded-full py-4`,
-            { backgroundColor: ACCENT_TEAL },
+            { backgroundColor: colors.brand },
           ]}>
           <Text fontWeight="bold" fontSize={15} classN="text-white">
             Share invite link
@@ -108,15 +108,15 @@ export default function ReferAFriend() {
         <View
           style={[
             tw`mt-6 flex-row items-center gap-3 rounded-2xl p-3.5`,
-            { backgroundColor: colors.card },
+            { backgroundColor: systemColors.card },
             CARD_SHADOW,
           ]}>
           <View
             style={[
               tw`h-10 w-10 items-center justify-center rounded-full`,
-              { backgroundColor: withOpacity(ACCENT_TEAL, 0.12) },
+              { backgroundColor: withOpacity(colors.brand, 0.12) },
             ]}>
-            <Users size={17} color={ACCENT_TEAL} />
+            <Users size={17} color={colors.brand} />
           </View>
           <View style={tw`flex-1`}>
             <Text fontWeight="bold" fontSize={13} classN={`text-[${fg}]`}>
@@ -137,7 +137,11 @@ export default function ReferAFriend() {
               key={reward.title}
               style={[
                 tw`rounded-2xl p-3.5`,
-                { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.grey5 },
+                {
+                  backgroundColor: systemColors.card,
+                  borderWidth: 1,
+                  borderColor: systemColors.grey5,
+                },
               ]}>
               <Text fontWeight="bold" fontSize={13} classN={`text-[${fg}]`}>
                 {reward.title}

@@ -4,12 +4,12 @@ import { useColorScheme } from '@/lib/useColorScheme';
 import { COLORS } from '@/theme/colors';
 
 function Toggle(props: React.ComponentProps<typeof Switch>) {
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
   return (
     <Switch
       trackColor={{
-        true: colors.primary,
-        false: colors.grey,
+        true: systemColors.primary,
+        false: systemColors.grey,
       }}
       thumbColor={COLORS.white}
       {...props}

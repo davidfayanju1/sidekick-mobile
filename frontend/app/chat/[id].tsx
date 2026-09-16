@@ -1,17 +1,20 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, Send } from 'lucide-react-native';
 import * as React from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Text from '@/components/UI/Text';
 import { CHATS } from '@/app/(tabs)/chats';
 import { tw } from '@/lib/tw';
-
-const ACCENT_TEAL = '#489A9F';
-const MUTED = '#9AA0A6';
-const BUBBLE_IN = '#F5F6F7';
-const BUBBLE_OUT = '#DDF2F1';
+import { colors } from '@/theme/palette';
 
 type Message =
   | { id: string; type: 'text'; from: 'me' | 'them'; text: string; time: string }
@@ -19,7 +22,13 @@ type Message =
 
 const CONVERSATIONS: Record<string, Message[]> = {
   '1': [
-    { id: 'm1', type: 'text', from: 'them', text: 'Hi! I can do the cleaning. Is 10am okay?', time: '08:20 AM' },
+    {
+      id: 'm1',
+      type: 'text',
+      from: 'them',
+      text: 'Hi! I can do the cleaning. Is 10am okay?',
+      time: '08:20 AM',
+    },
     {
       id: 'm2',
       type: 'text',
@@ -28,7 +37,13 @@ const CONVERSATIONS: Record<string, Message[]> = {
       time: '08:21 AM',
     },
     { id: 'm3', type: 'text', from: 'them', text: 'Yes I bring everything.', time: '08:22 AM' },
-    { id: 'm4', type: 'text', from: 'me', text: 'Aright. I will be waiting for you.', time: '08:21 AM' },
+    {
+      id: 'm4',
+      type: 'text',
+      from: 'me',
+      text: 'Aright. I will be waiting for you.',
+      time: '08:21 AM',
+    },
     { id: 'm5', type: 'system', text: '₦12,000 locked in escrow • Task started' },
   ],
 };
@@ -62,16 +77,20 @@ export default function ChatDetail() {
         style={tw`flex-1`}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}>
-        <View style={tw`flex-row items-center gap-3 border-b border-[#F0F1F2] px-4 pb-3`}>
+        <View
+          style={tw`flex-row items-center gap-3 border-b border-[${colors.surfaceSunken}] px-4 pb-3`}>
           <Pressable onPress={() => router.back()} hitSlop={8}>
-            <ChevronLeft size={24} color="#16181A" />
+            <ChevronLeft size={24} color={colors.textPrimary} />
           </Pressable>
           <View
             style={[
               tw`h-10 w-10 items-center justify-center rounded-full`,
-              { backgroundColor: chat?.avatarBg ?? '#F0DCC8' },
+              { backgroundColor: chat?.avatarBg ?? colors.accentSand },
             ]}>
-            <Text fontWeight="bold" fontSize={15} classN={`text-[${chat?.avatarText ?? '#B5762E'}]`}>
+            <Text
+              fontWeight="bold"
+              fontSize={15}
+              classN={`text-[${chat?.avatarText ?? '${colors.pendingText}'}]`}>
               {chat?.initial ?? '?'}
             </Text>
           </View>
@@ -79,7 +98,7 @@ export default function ChatDetail() {
             <Text fontWeight="bold" fontSize={15} classN="text-black">
               {chat?.fullName ?? 'Chat'}
             </Text>
-            <Text fontSize={12} classN={`text-[${ACCENT_TEAL}]`}>
+            <Text fontSize={12} classN={`text-[${colors.brand}]`}>
               {chat?.online ? 'Online' : 'Offline'} . {chat?.taskTitle ?? ''}
             </Text>
           </View>
@@ -93,7 +112,7 @@ export default function ChatDetail() {
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}>
           {messages.length === 0 ? (
             <View style={tw`mt-16 items-center`}>
-              <Text fontSize={14} classN="text-[#9AA0A6]">
+              <Text fontSize={14} classN={`text-[${colors.textMuted}]`}>
                 No messages yet
               </Text>
             </View>
@@ -102,8 +121,12 @@ export default function ChatDetail() {
               if (message.type === 'system') {
                 return (
                   <View key={message.id} style={tw`my-3 items-center`}>
-                    <View style={[tw`rounded-full px-4 py-2`, { backgroundColor: '#F0F1F2' }]}>
-                      <Text fontSize={12} classN="text-[#9AA0A6]">
+                    <View
+                      style={[
+                        tw`rounded-full px-4 py-2`,
+                        { backgroundColor: colors.surfaceSunken },
+                      ]}>
+                      <Text fontSize={12} classN={`text-[${colors.textMuted}]`}>
                         {message.text}
                       </Text>
                     </View>
@@ -117,13 +140,13 @@ export default function ChatDetail() {
                   <View
                     style={[
                       tw`max-w-[80%] rounded-2xl px-4 py-3`,
-                      { backgroundColor: isMe ? BUBBLE_OUT : BUBBLE_IN },
+                      { backgroundColor: isMe ? colors.brandBubble : colors.surface },
                     ]}>
                     <Text fontSize={14} classN="text-black">
                       {message.text}
                     </Text>
                   </View>
-                  <Text fontSize={10} classN="mt-1 text-[#9AA0A6]">
+                  <Text fontSize={10} classN={`mt-1 text-[${colors.textMuted}]`}>
                     {message.time}
                   </Text>
                 </View>
@@ -132,22 +155,23 @@ export default function ChatDetail() {
           )}
         </ScrollView>
 
-        <View style={tw`flex-row items-center gap-2.5 border-t border-[#F0F1F2] px-4 py-3`}>
+        <View
+          style={tw`flex-row items-center gap-2.5 border-t border-[${colors.surfaceSunken}] px-4 py-3`}>
           <TextInput
             value={draft}
             onChangeText={setDraft}
             placeholder="Type a message"
-            placeholderTextColor={MUTED}
+            placeholderTextColor={colors.textMuted}
             style={[
               tw`flex-1 rounded-full px-4 text-black`,
-              { height: 46, backgroundColor: '#F5F6F7' },
+              { height: 46, backgroundColor: colors.surface },
             ]}
           />
           <Pressable
             onPress={handleSend}
             style={[
               tw`h-11 w-11 items-center justify-center rounded-full`,
-              { backgroundColor: ACCENT_TEAL },
+              { backgroundColor: colors.brand },
             ]}>
             <Send size={18} color="white" />
           </Pressable>

@@ -5,7 +5,7 @@ import type { SearchBarProps } from 'react-native-screens';
 import { useColorScheme } from './useColorScheme';
 
 function useHeaderSearchBar(props: SearchBarProps = {}) {
-  const { colorScheme, colors } = useColorScheme();
+  const { colorScheme, colors: systemColors } = useColorScheme();
   const navigation = useNavigation();
   const [search, setSearch] = React.useState('');
 
@@ -13,10 +13,10 @@ function useHeaderSearchBar(props: SearchBarProps = {}) {
     navigation.setOptions({
       headerSearchBarOptions: {
         placeholder: 'Search...',
-        textColor: colors.foreground,
-        tintColor: colors.primary,
-        headerIconColor: colors.foreground,
-        hintTextColor: colors.grey,
+        textColor: systemColors.foreground,
+        tintColor: systemColors.primary,
+        headerIconColor: systemColors.foreground,
+        hintTextColor: systemColors.grey,
         hideWhenScrolling: false,
         onChangeText(event) {
           setSearch(event.nativeEvent.text);

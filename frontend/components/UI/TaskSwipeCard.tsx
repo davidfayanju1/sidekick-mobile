@@ -16,11 +16,10 @@ import Text from '@/components/UI/Text';
 import { CARD_SHADOW, getCategoryMeta, type BrowsableTask } from '@/components/UI/TaskParts';
 import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
+import { colors } from '@/theme/palette';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.28;
-const REJECT_COLOR = '#D1573B';
-const ACCEPT_COLOR = '#2F9E56';
 
 export interface TaskSwipeCardHandle {
   swipeLeft: () => void;
@@ -41,8 +40,8 @@ function StarRow({ rating }: { rating: number }) {
         <Star
           key={index}
           size={11}
-          color={index < rating ? '#F5A623' : '#E1E4EA'}
-          fill={index < rating ? '#F5A623' : '#E1E4EA'}
+          color={index < rating ? colors.star : colors.borderLight}
+          fill={index < rating ? colors.star : colors.borderLight}
         />
       ))}
     </View>
@@ -51,9 +50,9 @@ function StarRow({ rating }: { rating: number }) {
 
 export const TaskSwipeCard = React.forwardRef<TaskSwipeCardHandle, TaskSwipeCardProps>(
   function TaskSwipeCard({ task, active, stackDepth, onSwiped }, ref) {
-    const { colors } = useColorScheme();
-    const fg = twColor(colors.foreground);
-    const muted = twColor(colors.mutedForeground);
+    const { colors: systemColors } = useColorScheme();
+    const fg = twColor(systemColors.foreground);
+    const muted = twColor(systemColors.mutedForeground);
     const { color: categoryColor } = getCategoryMeta(task.category);
 
     const translateX = useSharedValue(0);
@@ -128,27 +127,27 @@ export const TaskSwipeCard = React.forwardRef<TaskSwipeCardHandle, TaskSwipeCard
       <Animated.View
         style={[
           tw`absolute inset-x-0 rounded-3xl p-5`,
-          { backgroundColor: colors.card },
+          { backgroundColor: systemColors.card },
           CARD_SHADOW,
           cardStyle,
         ]}>
         <Animated.View
           style={[
             tw`absolute left-5 top-5 z-10 rounded-lg px-3 py-1`,
-            { borderWidth: 2, borderColor: ACCEPT_COLOR, transform: [{ rotate: '-12deg' }] },
+            { borderWidth: 2, borderColor: colors.success, transform: [{ rotate: '-12deg' }] },
             acceptStampStyle,
           ]}>
-          <Text fontWeight="black" fontSize={16} classN={`text-[${ACCEPT_COLOR}]`}>
+          <Text fontWeight="black" fontSize={16} classN={`text-[${colors.success}]`}>
             ACCEPT
           </Text>
         </Animated.View>
         <Animated.View
           style={[
             tw`absolute right-5 top-5 z-10 rounded-lg px-3 py-1`,
-            { borderWidth: 2, borderColor: REJECT_COLOR, transform: [{ rotate: '12deg' }] },
+            { borderWidth: 2, borderColor: colors.dangerText, transform: [{ rotate: '12deg' }] },
             rejectStampStyle,
           ]}>
-          <Text fontWeight="black" fontSize={16} classN={`text-[${REJECT_COLOR}]`}>
+          <Text fontWeight="black" fontSize={16} classN={`text-[${colors.dangerText}]`}>
             PASS
           </Text>
         </Animated.View>
@@ -172,14 +171,14 @@ export const TaskSwipeCard = React.forwardRef<TaskSwipeCardHandle, TaskSwipeCard
         <View
           style={[
             tw`mt-4 flex-row items-center gap-2.5 rounded-2xl p-3`,
-            { backgroundColor: colors.grey6 },
+            { backgroundColor: systemColors.grey6 },
           ]}>
           <View
             style={[
               tw`h-10 w-10 items-center justify-center rounded-full`,
-              { backgroundColor: '#F0DCC8' },
+              { backgroundColor: colors.accentSand },
             ]}>
-            <Text fontWeight="bold" fontSize={14} classN="text-[#B5762E]">
+            <Text fontWeight="bold" fontSize={14} classN={`text-[${colors.pendingText}]`}>
               {task.heroInitial}
             </Text>
           </View>
@@ -191,7 +190,7 @@ export const TaskSwipeCard = React.forwardRef<TaskSwipeCardHandle, TaskSwipeCard
           </View>
         </View>
 
-        <View style={[tw`mt-4 pt-4`, { borderTopWidth: 1, borderTopColor: colors.grey5 }]}>
+        <View style={[tw`mt-4 pt-4`, { borderTopWidth: 1, borderTopColor: systemColors.grey5 }]}>
           <View style={tw`flex-row items-center justify-between`}>
             <Text fontSize={12} classN={`text-[${muted}]`}>
               {task.location}
@@ -200,7 +199,7 @@ export const TaskSwipeCard = React.forwardRef<TaskSwipeCardHandle, TaskSwipeCard
               {task.budget}
             </Text>
           </View>
-          <Text fontSize={11} classN="mt-1 text-[#D97A55]">
+          <Text fontSize={11} classN={`mt-1 text-[${colors.warning}]`}>
             Min. delivery time: {task.etaWindow}
           </Text>
         </View>

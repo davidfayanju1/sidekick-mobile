@@ -29,7 +29,7 @@ type DatePickerProps = {
 };
 
 export function DatePicker(props: DatePickerProps) {
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
 
   const show = (currentMode: 'time' | 'date') => () => {
     DateTimePickerAndroid.open({
@@ -62,7 +62,7 @@ export function DatePicker(props: DatePickerProps) {
             onPress={show('date')}
             style={({ pressed }) => [
               tw`rounded px-2.5 py-3`,
-              { borderWidth: 1, borderColor: withOpacity(colors.foreground, 0.3) },
+              { borderWidth: 1, borderColor: withOpacity(systemColors.foreground, 0.3) },
               pressed && tw`opacity-80`,
             ]}>
             <Text style={tw`py-px text-sm`}>
@@ -74,7 +74,7 @@ export function DatePicker(props: DatePickerProps) {
           <View
             style={[
               tw`absolute left-2 top-0 px-1`,
-              { backgroundColor: colors.card },
+              { backgroundColor: systemColors.card },
               props.materialDateLabelStyle,
             ]}>
             <Text variant="caption2" style={tw`text-[10px] opacity-60`}>
@@ -91,7 +91,7 @@ export function DatePicker(props: DatePickerProps) {
             onPress={show('time')}
             style={({ pressed }) => [
               tw`rounded px-2.5 py-3`,
-              { borderWidth: 1, borderColor: withOpacity(colors.foreground, 0.3) },
+              { borderWidth: 1, borderColor: withOpacity(systemColors.foreground, 0.3) },
               pressed && tw`opacity-80`,
             ]}>
             <Text style={tw`py-px text-sm`}>
@@ -103,7 +103,7 @@ export function DatePicker(props: DatePickerProps) {
           <View
             style={[
               tw`absolute left-2 top-0 px-1`,
-              { backgroundColor: colors.card },
+              { backgroundColor: systemColors.card },
               props.materialTimeLabelStyle,
             ]}>
             <Text variant="caption2" style={tw`text-[10px] opacity-60`}>

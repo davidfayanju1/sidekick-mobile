@@ -7,11 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
+import { colors } from '@/theme/palette';
 
-const ACCENT_TEAL = '#489A9F';
-const DISABLED_TEAL = '#CFE3E4';
-const BORDER = '#D1D4D5';
-const RESEND_BLUE = '#3B82F6';
 const RESEND_SECONDS = 54;
 
 function formatCountdown(seconds: number) {
@@ -51,13 +48,13 @@ export default function VerifyPhone() {
           onPress={() => router.back()}
           hitSlop={8}
           style={tw`-ml-2 h-10 w-10 items-center justify-center`}>
-          <ChevronLeft size={26} color="#000" />
+          <ChevronLeft size={26} color={colors.iconPrimary} />
         </Pressable>
 
         <Text fontWeight="bold" fontSize={24} classN="mt-3 text-black">
           Verify Phone
         </Text>
-        <Text fontSize={14} classN="mt-1 text-[#B7B7B7]">
+        <Text fontSize={14} classN={`mt-1 text-[${colors.textSubtle}]`}>
           {phone ? `We sent a 4-digit code to ${phone}` : 'We sent a 4-digit code to your phone'}
         </Text>
 
@@ -65,8 +62,8 @@ export default function VerifyPhone() {
           <OTPTextInput
             ref={otpRef}
             inputCount={4}
-            tintColor={ACCENT_TEAL}
-            offTintColor={BORDER}
+            tintColor={colors.brand}
+            offTintColor={colors.borderStrong}
             handleTextChange={setOtp}
             containerStyle={{ width: 280 }}
             // `textInputStyle` is mistyped as ViewStyle upstream even though it targets a TextInput
@@ -79,7 +76,7 @@ export default function VerifyPhone() {
                 borderRadius: 16,
                 fontSize: 22,
                 fontWeight: '600',
-                color: '#000',
+                color: colors.iconPrimary,
               } as any
             }
           />
@@ -89,14 +86,16 @@ export default function VerifyPhone() {
           </Text>
 
           <View style={tw`mt-1 flex-row items-center`}>
-            <Text fontSize={13} classN="text-[#8C9296]">
+            <Text fontSize={13} classN={`text-[${colors.textMutedAlt}]`}>
               Didn&apos;t Receive Code?{' '}
             </Text>
             <Pressable onPress={handleResend} disabled={secondsLeft > 0} hitSlop={8}>
               <Text
                 fontWeight="medium"
                 fontSize={13}
-                classN={secondsLeft > 0 ? 'text-[#B7B7B7]' : `text-[${RESEND_BLUE}]`}>
+                classN={
+                  secondsLeft > 0 ? `text-[${colors.textSubtle}]` : `text-[${colors.textLink}]`
+                }>
                 Resend
               </Text>
             </Pressable>
@@ -107,7 +106,7 @@ export default function VerifyPhone() {
           onPress={handleVerify}
           disabled={otp.length < 4}
           style={{
-            backgroundColor: otp.length < 4 ? DISABLED_TEAL : ACCENT_TEAL,
+            backgroundColor: otp.length < 4 ? colors.brandDisabled : colors.brand,
             ...tw`mt-10 items-center justify-center rounded-full py-4`,
           }}>
           <Text fontWeight="bold" fontSize={16} classN="text-white">

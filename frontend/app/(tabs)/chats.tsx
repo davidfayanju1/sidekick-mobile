@@ -6,11 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
-
-const ACCENT_TEAL = '#489A9F';
-const MUTED = '#9AA0A6';
-const SEARCH_BG = '#EFF7F6';
-const UNREAD_RED = '#E5484D';
+import { colors } from '@/theme/palette';
 
 type ChatTab = 'active' | 'completed';
 
@@ -38,14 +34,14 @@ export const CHATS: ChatPreview[] = [
     name: 'Ade. B',
     fullName: 'Ade Balogun',
     initial: 'A',
-    avatarBg: '#F0DCC8',
-    avatarText: '#B5762E',
+    avatarBg: colors.accentSand,
+    avatarText: colors.pendingText,
     online: true,
     taskTitle: 'Deep Clean Task',
     tab: 'active',
     statusLabel: 'In Progress',
-    statusBg: '#DCF5E3',
-    statusText: '#2F9E56',
+    statusBg: colors.successBg,
+    statusText: colors.success,
     lastMessage: "I'm on my way - eta 15mins",
     time: '2m',
     unread: 2,
@@ -55,8 +51,8 @@ export const CHATS: ChatPreview[] = [
     name: 'Kemi O.',
     fullName: 'Kemi Okafor',
     initial: 'K',
-    avatarBg: '#DCE8FB',
-    avatarText: '#3B6FD1',
+    avatarBg: colors.scheduledBg,
+    avatarText: colors.scheduledText,
     online: false,
     taskTitle: 'Grocery Pickup',
     tab: 'active',
@@ -68,14 +64,14 @@ export const CHATS: ChatPreview[] = [
     name: 'Tunde J.',
     fullName: 'Tunde Johnson',
     initial: 'T',
-    avatarBg: '#DCF5E3',
-    avatarText: '#2F9E56',
+    avatarBg: colors.successBg,
+    avatarText: colors.success,
     online: false,
     taskTitle: 'Laptop Repair',
     tab: 'completed',
     statusLabel: 'Done',
-    statusBg: '#DCE8FB',
-    statusText: '#3B6FD1',
+    statusBg: colors.scheduledBg,
+    statusText: colors.scheduledText,
     lastMessage: 'Thank you! Great working with you',
     time: 'Yesterday',
   },
@@ -85,7 +81,7 @@ function ChatRow({ chat }: { chat: ChatPreview }) {
   return (
     <Pressable
       onPress={() => router.push(`/chat/${chat.id}`)}
-      style={tw`flex-row items-center gap-3 border-b border-[#F0F1F2] py-3.5`}>
+      style={tw`flex-row items-center gap-3 border-b border-[${colors.surfaceSunken}] py-3.5`}>
       <View
         style={[
           tw`h-12 w-12 items-center justify-center rounded-full`,
@@ -102,28 +98,27 @@ function ChatRow({ chat }: { chat: ChatPreview }) {
             {chat.name}
           </Text>
           {chat.statusLabel && (
-            <View
-              style={[tw`rounded-full px-2 py-0.5`, { backgroundColor: chat.statusBg }]}>
+            <View style={[tw`rounded-full px-2 py-0.5`, { backgroundColor: chat.statusBg }]}>
               <Text fontSize={10} classN={`text-[${chat.statusText}]`}>
                 {chat.statusLabel}
               </Text>
             </View>
           )}
         </View>
-        <Text fontSize={13} classN="mt-0.5 text-[#9AA0A6]" numberOfLines={1}>
+        <Text fontSize={13} classN={`mt-0.5 text-[${colors.textMuted}]`} numberOfLines={1}>
           {chat.lastMessage}
         </Text>
       </View>
 
       <View style={tw`items-end gap-1.5`}>
-        <Text fontSize={11} classN="text-[#9AA0A6]">
+        <Text fontSize={11} classN={`text-[${colors.textMuted}]`}>
           {chat.time}
         </Text>
         {!!chat.unread && (
           <View
             style={[
               tw`h-4.5 min-w-4.5 items-center justify-center rounded-full px-1`,
-              { backgroundColor: UNREAD_RED },
+              { backgroundColor: colors.unread },
             ]}>
             <Text fontWeight="bold" fontSize={10} classN="text-white">
               {chat.unread}
@@ -140,8 +135,7 @@ export default function Chats() {
   const [query, setQuery] = React.useState('');
 
   const chats = CHATS.filter(
-    (chat) =>
-      chat.tab === activeTab && chat.name.toLowerCase().includes(query.trim().toLowerCase())
+    (chat) => chat.tab === activeTab && chat.name.toLowerCase().includes(query.trim().toLowerCase())
   );
 
   return (
@@ -150,18 +144,18 @@ export default function Chats() {
         <View
           style={[
             tw`h-10 w-10 items-center justify-center rounded-full`,
-            { backgroundColor: '#F0DCC8' },
+            { backgroundColor: colors.accentSand },
           ]}>
-          <Text fontWeight="bold" fontSize={15} classN="text-[#B5762E]">
+          <Text fontWeight="bold" fontSize={15} classN={`text-[${colors.pendingText}]`}>
             B
           </Text>
         </View>
         <View
           style={{
-            borderColor: ACCENT_TEAL,
+            borderColor: colors.brand,
             ...tw`h-9 w-9 items-center justify-center rounded-full border`,
           }}>
-          <Text fontWeight="bold" fontSize={13} classN={`text-[${ACCENT_TEAL}]`}>
+          <Text fontWeight="bold" fontSize={13} classN={`text-[${colors.brand}]`}>
             H
           </Text>
         </View>
@@ -174,14 +168,14 @@ export default function Chats() {
       <View
         style={[
           tw`mx-4 mt-3 flex-row items-center gap-2 rounded-full px-4`,
-          { height: 44, backgroundColor: SEARCH_BG },
+          { height: 44, backgroundColor: colors.brandTintMuted },
         ]}>
-        <Search size={17} color={MUTED} />
+        <Search size={17} color={colors.textMuted} />
         <TextInput
           value={query}
           onChangeText={setQuery}
           placeholder="Search"
-          placeholderTextColor={MUTED}
+          placeholderTextColor={colors.textMuted}
           style={tw`flex-1 text-black`}
         />
       </View>
@@ -191,7 +185,7 @@ export default function Chats() {
           <Text
             fontWeight={activeTab === 'active' ? 'bold' : 'normal'}
             fontSize={13}
-            classN={activeTab === 'active' ? 'text-black' : 'text-[#9AA0A6]'}>
+            classN={activeTab === 'active' ? 'text-black' : `text-[${colors.textMuted}]`}>
             Active
           </Text>
         </Pressable>
@@ -199,7 +193,7 @@ export default function Chats() {
           <Text
             fontWeight={activeTab === 'completed' ? 'bold' : 'normal'}
             fontSize={13}
-            classN={activeTab === 'completed' ? 'text-black' : 'text-[#9AA0A6]'}>
+            classN={activeTab === 'completed' ? 'text-black' : `text-[${colors.textMuted}]`}>
             Completed
           </Text>
         </Pressable>
@@ -211,7 +205,7 @@ export default function Chats() {
         showsVerticalScrollIndicator={false}>
         {chats.length === 0 ? (
           <View style={tw`mt-16 items-center`}>
-            <Text fontSize={14} classN="text-[#9AA0A6]">
+            <Text fontSize={14} classN={`text-[${colors.textMuted}]`}>
               No chats yet
             </Text>
           </View>

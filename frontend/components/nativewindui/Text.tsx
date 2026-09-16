@@ -40,17 +40,17 @@ function Text({
 }: React.ComponentProps<typeof UITextView> &
   VariantProps<typeof textVariants> & { color?: TextColor }) {
   const contextStyle = React.useContext(TextClassContext);
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
 
   const colorStyle: TextStyle = {
     color:
       color === 'secondary'
-        ? withOpacity(colors.secondaryForeground, 0.9)
+        ? withOpacity(systemColors.secondaryForeground, 0.9)
         : color === 'tertiary'
-          ? withOpacity(colors.mutedForeground, 0.9)
+          ? withOpacity(systemColors.mutedForeground, 0.9)
           : color === 'quarternary'
-            ? withOpacity(colors.mutedForeground, 0.5)
-            : colors.foreground,
+            ? withOpacity(systemColors.mutedForeground, 0.5)
+            : systemColors.foreground,
   };
 
   return (

@@ -22,7 +22,7 @@ interface BottomSheetProps {
 }
 
 export default function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
   const translateY = React.useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const backdropOpacity = React.useRef(new Animated.Value(0)).current;
   const [rendered, setRendered] = React.useState(visible);
@@ -73,13 +73,16 @@ export default function BottomSheet({ visible, onClose, children }: BottomSheetP
           style={tw`mt-auto`}
           pointerEvents="box-none">
           <Animated.View style={{ transform: [{ translateY }] }}>
-            <View style={[tw`rounded-t-[28px] px-5 pt-3`, { backgroundColor: colors.card }]}>
+            <View style={[tw`rounded-t-[28px] px-5 pt-3`, { backgroundColor: systemColors.card }]}>
               <View
-                style={[tw`h-1 w-10 self-center rounded-full`, { backgroundColor: colors.grey4 }]}
+                style={[
+                  tw`h-1 w-10 self-center rounded-full`,
+                  { backgroundColor: systemColors.grey4 },
+                ]}
               />
               <View style={tw`pb-2 pt-4`}>{children}</View>
             </View>
-            <SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.card }} />
+            <SafeAreaView edges={['bottom']} style={{ backgroundColor: systemColors.card }} />
           </Animated.View>
         </KeyboardAvoidingView>
       </View>

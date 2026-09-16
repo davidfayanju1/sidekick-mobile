@@ -145,9 +145,12 @@ type ButtonProps = PressableProps & ButtonVariantProps & AndroidOnlyButtonProps;
 const Root = Platform.OS === 'android' ? View : Slot.Pressable;
 
 function Button({ variant = 'primary', size, style, androidRootStyle, ...props }: ButtonProps) {
-  const { colorScheme, colors, isDarkColorScheme } = useColorScheme();
+  const { colorScheme, colors: systemColors, isDarkColorScheme } = useColorScheme();
 
-  const textStyle = tw.style(buttonTextSizeVariants({ size }), getButtonTextStyle(variant, colors));
+  const textStyle = tw.style(
+    buttonTextSizeVariants({ size }),
+    getButtonTextStyle(variant, systemColors)
+  );
 
   return (
     <TextClassContext.Provider value={textStyle}>
@@ -160,7 +163,7 @@ function Button({ variant = 'primary', size, style, androidRootStyle, ...props }
         <Pressable
           style={(state: PressableStateCallbackType) => [
             tw.style(buttonSizeVariants({ size })),
-            getButtonVariantStyle(variant, colors, isDarkColorScheme, state.pressed),
+            getButtonVariantStyle(variant, systemColors, isDarkColorScheme, state.pressed),
             props.disabled && { opacity: 0.5 },
             BORDER_CURVE,
             typeof style === 'function' ? style(state) : style,

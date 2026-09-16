@@ -21,10 +21,7 @@ import { useColorScheme } from '@/lib/useColorScheme';
 import { useRoleStore } from '@/store/roleStore';
 import { useTaskStore } from '@/store/taskStore';
 import { withOpacity } from '@/theme/with-opacity';
-
-const STAR_COLOR = '#F5A623';
-const STAR_EMPTY = '#E1E4EA';
-const SUCCESS = '#2F9E56';
+import { colors } from '@/theme/palette';
 
 const STEP_TITLES = ['Posted', 'Matched', 'In Progress', 'Confirm', 'Payment'];
 
@@ -68,9 +65,9 @@ function buildTimelineSteps(
 
 export default function TaskDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { colors } = useColorScheme();
-  const fg = twColor(colors.foreground);
-  const muted = twColor(colors.mutedForeground);
+  const { colors: systemColors } = useColorScheme();
+  const fg = twColor(systemColors.foreground);
+  const muted = twColor(systemColors.mutedForeground);
   const role = useRoleStore((state) => state.role);
   const isSidekick = role === 'sidekick';
   const sidekickCurrentTask = useTaskStore((state) => state.sidekickCurrentTask);
@@ -97,7 +94,10 @@ export default function TaskDetails() {
   if (!task) {
     return (
       <SafeAreaView
-        style={[tw`flex-1 items-center justify-center`, { backgroundColor: colors.background }]}>
+        style={[
+          tw`flex-1 items-center justify-center`,
+          { backgroundColor: systemColors.background },
+        ]}>
         <Text fontSize={14} classN={`text-[${muted}]`}>
           Task not found
         </Text>
@@ -131,11 +131,11 @@ export default function TaskDetails() {
 
   return (
     <SafeAreaView
-      style={[tw`flex-1`, { backgroundColor: colors.background }]}
+      style={[tw`flex-1`, { backgroundColor: systemColors.background }]}
       edges={['top', 'bottom']}>
       <View style={tw`flex-row items-center gap-3 px-4 pb-3 pt-2`}>
         <Pressable onPress={() => router.back()} hitSlop={8}>
-          <ChevronLeft size={24} color={colors.foreground} />
+          <ChevronLeft size={24} color={systemColors.foreground} />
         </Pressable>
         <Text fontWeight="bold" fontSize={16} classN={`text-[${fg}]`}>
           Task Details
@@ -194,15 +194,15 @@ export default function TaskDetails() {
           <View
             style={[
               tw`mt-4 flex-row items-center gap-3 rounded-2xl p-3.5`,
-              { backgroundColor: colors.card },
+              { backgroundColor: systemColors.card },
               CARD_SHADOW,
             ]}>
             <View
               style={[
                 tw`h-11 w-11 items-center justify-center rounded-full`,
-                { backgroundColor: '#F0DCC8' },
+                { backgroundColor: colors.accentSand },
               ]}>
-              <Text fontWeight="bold" fontSize={15} classN="text-[#B5762E]">
+              <Text fontWeight="bold" fontSize={15} classN={`text-[${colors.pendingText}]`}>
                 {counterpartName.charAt(0)}
               </Text>
             </View>
@@ -227,7 +227,8 @@ export default function TaskDetails() {
         )}
 
         {task.currentStep !== undefined && (
-          <View style={[tw`mt-4 rounded-2xl p-4`, { backgroundColor: colors.card }, CARD_SHADOW]}>
+          <View
+            style={[tw`mt-4 rounded-2xl p-4`, { backgroundColor: systemColors.card }, CARD_SHADOW]}>
             <Text fontWeight="bold" fontSize={14} classN={`text-[${fg}]`}>
               Progress
             </Text>
@@ -236,16 +237,17 @@ export default function TaskDetails() {
         )}
 
         {task.disputeText && (
-          <View style={[tw`mt-4 rounded-xl px-3 py-2.5`, { backgroundColor: '#FBE2DC' }]}>
-            <Text fontSize={12} classN="text-[#D1573B]">
+          <View style={[tw`mt-4 rounded-xl px-3 py-2.5`, { backgroundColor: colors.disputeBg }]}>
+            <Text fontSize={12} classN={`text-[${colors.dangerText}]`}>
               {task.disputeText}
             </Text>
           </View>
         )}
 
-        <View style={[tw`mt-4 rounded-2xl p-4`, { backgroundColor: colors.card }, CARD_SHADOW]}>
+        <View
+          style={[tw`mt-4 rounded-2xl p-4`, { backgroundColor: systemColors.card }, CARD_SHADOW]}>
           <View style={tw`flex-row items-center gap-2`}>
-            <Clock size={14} color={colors.mutedForeground} />
+            <Clock size={14} color={systemColors.mutedForeground} />
             <Text fontSize={12} classN={`text-[${muted}]`}>
               Min. delivery time
             </Text>
@@ -258,9 +260,9 @@ export default function TaskDetails() {
             <View
               style={[
                 tw`mt-3 flex-row items-center justify-between pt-3`,
-                { borderTopWidth: 1, borderTopColor: colors.grey5 },
+                { borderTopWidth: 1, borderTopColor: systemColors.grey5 },
               ]}>
-              <Text fontSize={12} classN="text-[#D97A55]">
+              <Text fontSize={12} classN={`text-[${colors.warning}]`}>
                 {task.payIn}
               </Text>
               <Text fontWeight="black" fontSize={17} classN={`text-[${fg}]`}>
@@ -289,16 +291,16 @@ export default function TaskDetails() {
             exiting={FadeOut}
             style={[
               tw`mt-3 flex-row items-center gap-2.5 rounded-2xl p-3`,
-              { backgroundColor: withOpacity(SUCCESS, 0.12) },
+              { backgroundColor: withOpacity(colors.success, 0.12) },
             ]}>
             <View
               style={[
                 tw`h-7 w-7 items-center justify-center rounded-full`,
-                { backgroundColor: SUCCESS },
+                { backgroundColor: colors.success },
               ]}>
               <Check size={14} color="white" strokeWidth={3} />
             </View>
-            <Text fontWeight="medium" fontSize={13} classN={`text-[${twColor(SUCCESS)}]`}>
+            <Text fontWeight="medium" fontSize={13} classN={`text-[${twColor(colors.success)}]`}>
               Task started! Your timeline is updated below.
             </Text>
           </Animated.View>
@@ -344,8 +346,8 @@ export default function TaskDetails() {
                       <Pressable key={index} onPress={() => setRating(index + 1)} hitSlop={6}>
                         <Star
                           size={28}
-                          color={filled ? STAR_COLOR : STAR_EMPTY}
-                          fill={filled ? STAR_COLOR : STAR_EMPTY}
+                          color={filled ? colors.star : colors.borderLight}
+                          fill={filled ? colors.star : colors.borderLight}
                         />
                       </Pressable>
                     );
@@ -355,16 +357,16 @@ export default function TaskDetails() {
                   value={reviewNote}
                   onChangeText={setReviewNote}
                   placeholder="Leave a comment (optional)"
-                  placeholderTextColor={colors.mutedForeground}
+                  placeholderTextColor={systemColors.mutedForeground}
                   multiline
                   style={[
                     tw`mt-3 rounded-2xl p-4`,
                     {
                       borderWidth: 1,
-                      borderColor: colors.grey5,
+                      borderColor: systemColors.grey5,
                       minHeight: 88,
                       textAlignVertical: 'top',
-                      color: colors.foreground,
+                      color: systemColors.foreground,
                     },
                   ]}
                 />

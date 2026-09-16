@@ -5,12 +5,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
-
-const ACCENT_TEAL = '#489A9F';
-const BORDER_TEAL = '#8FBFC2';
-const DISABLED_TEAL = '#CFE3E4';
-const MUTED = '#8C9296';
-const BODY = '#4B4F54';
+import { colors } from '@/theme/palette';
 
 type Segment = { text: string; bold?: boolean };
 
@@ -168,7 +163,7 @@ function RichText({
   classN?: string;
 }) {
   return (
-    <Text fontSize={13} classN={`${classN ?? ''} text-[${BODY}]`.trim()}>
+    <Text fontSize={13} classN={`${classN ?? ''} text-[${colors.textBody}]`.trim()}>
       {prefix}
       {segments.map((segment, i) =>
         segment.bold ? (
@@ -176,7 +171,7 @@ function RichText({
             {segment.text}
           </Text>
         ) : (
-          <Text key={i} fontSize={13} classN={`text-[${BODY}]`}>
+          <Text key={i} fontSize={13} classN={`text-[${colors.textBody}]`}>
             {segment.text}
           </Text>
         )
@@ -214,7 +209,7 @@ export default function Terms() {
         <Text fontWeight="bold" fontSize={24} classN="mt-3 text-black">
           Terms & Conditions
         </Text>
-        <Text fontSize={14} classN="mt-1 text-[#B7B7B7]">
+        <Text fontSize={14} classN={`mt-1 text-[${colors.textSubtle}]`}>
           Before you create an account, please read and accept our Terms and Conditions
         </Text>
 
@@ -229,9 +224,9 @@ export default function Terms() {
             Governing Law: Federal Republic of Nigeria
           </Text>
 
-          <View style={[tw`mt-4 h-px`, { backgroundColor: '#E3E5E8' }]} />
+          <View style={[tw`mt-4 h-px`, { backgroundColor: colors.borderDivider }]} />
 
-          <Text fontSize={13} classN="mt-4 text-[#4B4F54]">
+          <Text fontSize={13} classN={`mt-4 text-[${colors.textBody}]`}>
             {INTRO}
           </Text>
 
@@ -243,13 +238,13 @@ export default function Terms() {
                 <View
                   key={section.title}
                   style={{
-                    borderColor: BORDER_TEAL,
+                    borderColor: colors.brandBorder,
                     ...tw`rounded-3xl border px-4 py-3`,
                   }}>
                   <Pressable onPress={() => toggleSection(index)} style={tw`flex-row items-center`}>
                     <View
                       style={{
-                        ...tw`h-7 w-7 items-center bg-[#E1E4EA] justify-center rounded-full`,
+                        ...tw`h-7 w-7 items-center bg-[${colors.borderLight}] justify-center rounded-full`,
                       }}>
                       <Text fontWeight="bold" fontSize={11.11} classN={`text-black`}>
                         {index + 1}
@@ -263,21 +258,21 @@ export default function Terms() {
                         <View
                           style={[
                             tw`mt-1 self-start rounded-full px-2 py-0.5`,
-                            { backgroundColor: '#DCEEEF' },
+                            { backgroundColor: colors.brandTint },
                           ]}>
-                          <Text fontSize={11} classN={`text-[${ACCENT_TEAL}]`}>
+                          <Text fontSize={11} classN={`text-[${colors.brand}]`}>
                             Accepted
                           </Text>
                         </View>
                       ) : (
-                        <Text fontSize={12} classN={`text-[${MUTED}]`}>
+                        <Text fontSize={12} classN={`text-[${colors.textMutedAlt}]`}>
                           Tap to read • Required
                         </Text>
                       )}
                     </View>
                     <ChevronDown
                       size={20}
-                      color={MUTED}
+                      color={colors.textMutedAlt}
                       style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
                     />
                   </Pressable>
@@ -294,7 +289,7 @@ export default function Terms() {
                           <Pressable
                             onPress={() => setOpenIndex(null)}
                             style={{
-                              borderColor: '#D1D4D5',
+                              borderColor: colors.borderStrong,
                               ...tw`flex-1 items-center justify-center rounded-full border py-3`,
                             }}>
                             <Text fontWeight="medium" fontSize={14} classN="text-black">
@@ -304,13 +299,13 @@ export default function Terms() {
                           <Pressable
                             onPress={() => acceptSection(index)}
                             style={{
-                              borderColor: ACCENT_TEAL,
+                              borderColor: colors.brand,
                               ...tw`flex-1 items-center justify-center rounded-full border py-3`,
                             }}>
                             <Text
                               fontWeight="medium"
                               fontSize={14}
-                              classN={`text-[${ACCENT_TEAL}]`}>
+                              classN={`text-[${colors.brand}]`}>
                               I Agree
                             </Text>
                           </Pressable>
@@ -328,7 +323,7 @@ export default function Terms() {
           disabled={!allAccepted}
           onPress={handleCreateAccount}
           style={{
-            backgroundColor: allAccepted ? ACCENT_TEAL : DISABLED_TEAL,
+            backgroundColor: allAccepted ? colors.brand : colors.brandDisabled,
             ...tw`mb-4 items-center justify-center rounded-full py-4`,
           }}>
           <Text

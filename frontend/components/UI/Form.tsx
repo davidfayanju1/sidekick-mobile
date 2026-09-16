@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { tw } from '@/lib/tw';
 
 import Text from './Text';
+import { colors } from '@/theme/palette';
 
 interface FormProps {
   placeholder: string;
@@ -68,7 +69,7 @@ const Form = ({
       <View
         style={tw`border-solid ${
           icon || type === 'password' ? 'flex-row items-center' : ''
-        } mt-2 px-4 border-[1px] border-[#DADADA] rounded-full ${formStyle} w-full`}>
+        } mt-2 px-4 border-[1px] border-[${colors.border}] rounded-full ${formStyle} w-full`}>
         {icon && (
           <View style={tw`mr-2`}>
             <Feather name="search" size={24} color="gray" />
@@ -76,7 +77,7 @@ const Form = ({
         )}
         <TextInput
           placeholder={placeholder}
-          placeholderTextColor={'#a4a0a0'}
+          placeholderTextColor={colors.textPlaceholder}
           style={tw`flex-1 text-[.9rem] text-black ${inputStyle}`}
           value={value}
           onChangeText={onChangeText}
@@ -91,7 +92,7 @@ const Form = ({
             <Ionicons
               name={secureTextEntry ? 'eye-off-outline' : 'eye-outline'}
               size={20}
-              color="#575555"
+              color={colors.iconForm}
             />
           </TouchableOpacity>
         )}

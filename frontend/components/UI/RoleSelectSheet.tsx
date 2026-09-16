@@ -8,8 +8,7 @@ import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
 import type { UserRole } from '@/store/roleStore';
 import { withOpacity } from '@/theme/with-opacity';
-
-const ACCENT_TEAL = '#489A9F';
+import { colors } from '@/theme/palette';
 
 const OPTIONS: {
   role: UserRole;
@@ -37,11 +36,11 @@ interface RoleSelectSheetProps {
 }
 
 export default function RoleSelectSheet({ visible, onSelect }: RoleSelectSheetProps) {
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
   const [selected, setSelected] = React.useState<UserRole | null>(null);
 
-  const fg = twColor(colors.foreground);
-  const muted = twColor(colors.mutedForeground);
+  const fg = twColor(systemColors.foreground);
+  const muted = twColor(systemColors.mutedForeground);
 
   return (
     <BottomSheet visible={visible} onClose={() => {}}>
@@ -63,16 +62,16 @@ export default function RoleSelectSheet({ visible, onSelect }: RoleSelectSheetPr
                 tw`flex-row items-center gap-3 rounded-2xl p-4`,
                 {
                   borderWidth: isSelected ? 2 : 1,
-                  borderColor: isSelected ? ACCENT_TEAL : colors.grey5,
-                  backgroundColor: isSelected ? withOpacity(ACCENT_TEAL, 0.12) : colors.card,
+                  borderColor: isSelected ? colors.brand : systemColors.grey5,
+                  backgroundColor: isSelected ? withOpacity(colors.brand, 0.12) : systemColors.card,
                 },
               ]}>
               <View
                 style={[
                   tw`h-11 w-11 items-center justify-center rounded-xl`,
-                  { backgroundColor: isSelected ? ACCENT_TEAL : colors.grey6 },
+                  { backgroundColor: isSelected ? colors.brand : systemColors.grey6 },
                 ]}>
-                <Icon size={20} color={isSelected ? 'white' : colors.mutedForeground} />
+                <Icon size={20} color={isSelected ? 'white' : systemColors.mutedForeground} />
               </View>
               <View style={tw`flex-1`}>
                 <Text fontWeight="bold" fontSize={15} classN={`text-[${fg}]`}>
@@ -87,8 +86,8 @@ export default function RoleSelectSheet({ visible, onSelect }: RoleSelectSheetPr
                   tw`h-5 w-5 items-center justify-center rounded-full`,
                   {
                     borderWidth: 1.5,
-                    borderColor: isSelected ? ACCENT_TEAL : colors.grey3,
-                    backgroundColor: isSelected ? ACCENT_TEAL : 'transparent',
+                    borderColor: isSelected ? colors.brand : systemColors.grey3,
+                    backgroundColor: isSelected ? colors.brand : 'transparent',
                   },
                 ]}>
                 {isSelected && <Check size={12} color="white" strokeWidth={3} />}
@@ -103,7 +102,7 @@ export default function RoleSelectSheet({ visible, onSelect }: RoleSelectSheetPr
         onPress={() => selected && onSelect(selected)}
         style={[
           tw`mt-6 items-center justify-center rounded-full py-4`,
-          { backgroundColor: ACCENT_TEAL, opacity: selected ? 1 : 0.5 },
+          { backgroundColor: colors.brand, opacity: selected ? 1 : 0.5 },
         ]}>
         <Text fontWeight="bold" fontSize={15} classN="text-white">
           Continue

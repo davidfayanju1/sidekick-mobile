@@ -5,19 +5,16 @@ import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import BottomSheet from '@/components/UI/BottomSheet';
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
-
-const ACCENT_TEAL = '#489A9F';
-const DANGER = '#C94B34';
-const BORDER = '#E1E4EA';
-const SURFACE = '#F5F6F7';
-const MUTED = '#9AA0A6';
-const BODY = '#6B7075';
+import { colors } from '@/theme/palette';
 
 function PrimaryButton({ label, onPress }: { label: string; onPress?: () => void }) {
   return (
     <Pressable
       onPress={onPress}
-      style={[tw`items-center justify-center rounded-full py-4`, { backgroundColor: ACCENT_TEAL }]}>
+      style={[
+        tw`items-center justify-center rounded-full py-4`,
+        { backgroundColor: colors.brand },
+      ]}>
       <Text fontWeight="bold" fontSize={15} classN="text-white">
         {label}
       </Text>
@@ -28,7 +25,7 @@ function PrimaryButton({ label, onPress }: { label: string; onPress?: () => void
 function OutlineButton({
   label,
   onPress,
-  color = '#16181A',
+  color = colors.textPrimary,
 }: {
   label: string;
   onPress?: () => void;
@@ -39,7 +36,7 @@ function OutlineButton({
       onPress={onPress}
       style={[
         tw`items-center justify-center rounded-full py-4`,
-        { borderWidth: 1, borderColor: BORDER, backgroundColor: 'white' },
+        { borderWidth: 1, borderColor: colors.borderLight, backgroundColor: 'white' },
       ]}>
       <Text fontWeight="bold" fontSize={15} classN={`text-[${color}]`}>
         {label}
@@ -70,27 +67,27 @@ export function ConfirmTaskSheet({
       <Text fontWeight="black" fontSize={20} classN="text-black">
         Confirm Task done?
       </Text>
-      <Text fontSize={13} classN="mt-1.5 text-[#6B7075]">
+      <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
         {sidekickName} has marked this complete. Confirm to release payment.
       </Text>
 
       <Pressable
         style={[
           tw`mt-4 flex-row items-center gap-3 rounded-2xl p-3`,
-          { borderWidth: 1, borderColor: BORDER },
+          { borderWidth: 1, borderColor: colors.borderLight },
         ]}>
         <View
           style={[
             tw`h-11 w-11 items-center justify-center rounded-xl`,
-            { backgroundColor: SURFACE },
+            { backgroundColor: colors.surface },
           ]}>
-          <ImageIcon size={20} color={BODY} />
+          <ImageIcon size={20} color={colors.textSecondary} />
         </View>
         <View style={tw`flex-1`}>
           <Text fontWeight="bold" fontSize={13} classN="text-black">
             {photoCount} photos attached as proof
           </Text>
-          <Text fontSize={11} classN="mt-0.5 text-[#9AA0A6]">
+          <Text fontSize={11} classN={`mt-0.5 text-[${colors.textMuted}]`}>
             Sent by {sidekickName.split(' ')[0]} • Tap to view
           </Text>
         </View>
@@ -98,7 +95,7 @@ export function ConfirmTaskSheet({
 
       <View style={tw`mt-5 gap-3`}>
         <PrimaryButton label={`Confirm and pay ${price}`} onPress={onClose} />
-        <OutlineButton label="Report a dispute" onPress={onReportDispute} color={DANGER} />
+        <OutlineButton label="Report a dispute" onPress={onReportDispute} color={colors.danger} />
       </View>
     </BottomSheet>
   );
@@ -138,7 +135,7 @@ export function DisputeSheet({ visible, onClose, onSubmit }: DisputeSheetProps) 
       <Text fontWeight="black" fontSize={20} classN="text-black">
         Raise a Dispute
       </Text>
-      <Text fontSize={13} classN="mt-1.5 text-[#6B7075]">
+      <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
         Select the issue. Our team reviews within 24h.
       </Text>
 
@@ -151,20 +148,25 @@ export function DisputeSheet({ visible, onClose, onSubmit }: DisputeSheetProps) 
               onPress={() => setSelected(reason.id)}
               style={[
                 tw`mt-3 flex-row items-start gap-3 rounded-2xl p-4`,
-                { backgroundColor: SURFACE },
+                { backgroundColor: colors.surface },
               ]}>
               <View
                 style={[
                   tw`mt-0.5 h-5 w-5 items-center justify-center rounded-full`,
-                  { borderWidth: 2, borderColor: isSelected ? '#16181A' : '#C7CBCF' },
+                  {
+                    borderWidth: 2,
+                    borderColor: isSelected ? colors.textPrimary : colors.borderRadio,
+                  },
                 ]}>
-                {isSelected && <View style={tw`h-2.5 w-2.5 rounded-full bg-[#16181A]`} />}
+                {isSelected && (
+                  <View style={tw`h-2.5 w-2.5 rounded-full bg-[${colors.textPrimary}]`} />
+                )}
               </View>
               <View style={tw`flex-1`}>
                 <Text fontWeight="bold" fontSize={14} classN="text-black">
                   {reason.title}
                 </Text>
-                <Text fontSize={12} classN="mt-0.5 text-[#9AA0A6]">
+                <Text fontSize={12} classN={`mt-0.5 text-[${colors.textMuted}]`}>
                   {reason.description}
                 </Text>
               </View>
@@ -181,17 +183,25 @@ export function DisputeSheet({ visible, onClose, onSubmit }: DisputeSheetProps) 
         value={note}
         onChangeText={setNote}
         placeholder=""
-        placeholderTextColor={MUTED}
+        placeholderTextColor={colors.textMuted}
         style={[
           tw`mt-2 rounded-2xl p-4 text-black`,
-          { borderWidth: 1, borderColor: BORDER, minHeight: 96, textAlignVertical: 'top' },
+          {
+            borderWidth: 1,
+            borderColor: colors.borderLight,
+            minHeight: 96,
+            textAlignVertical: 'top',
+          },
         ]}
       />
 
       <View style={tw`mt-5 gap-3`}>
         <Pressable
           onPress={onSubmit}
-          style={[tw`items-center justify-center rounded-full py-4`, { backgroundColor: DANGER }]}>
+          style={[
+            tw`items-center justify-center rounded-full py-4`,
+            { backgroundColor: colors.danger },
+          ]}>
           <Text fontWeight="bold" fontSize={15} classN="text-white">
             Submit Dispute
           </Text>
@@ -223,8 +233,8 @@ const OFFERS: Offer[] = [
     id: '1',
     name: 'Tunde A.',
     initial: 'T',
-    avatarBg: '#F0DCC8',
-    avatarText: '#B5762E',
+    avatarBg: colors.accentSand,
+    avatarText: colors.pendingText,
     rating: 4,
     tasksCompleted: 45,
     price: '₦12,000',
@@ -236,8 +246,8 @@ const OFFERS: Offer[] = [
     id: '2',
     name: 'Pelumi Daniels',
     initial: 'P',
-    avatarBg: '#DCE8FB',
-    avatarText: '#3B6FD1',
+    avatarBg: colors.scheduledBg,
+    avatarText: colors.scheduledText,
     rating: 4,
     tasksCompleted: 70,
     price: '₦15,000',
@@ -249,8 +259,8 @@ const OFFERS: Offer[] = [
     id: '3',
     name: 'John Grace',
     initial: 'J',
-    avatarBg: '#DCF5E3',
-    avatarText: '#2F9E56',
+    avatarBg: colors.successBg,
+    avatarText: colors.success,
     rating: 4,
     tasksCompleted: 45,
     price: '₦10,000',
@@ -267,8 +277,8 @@ function StarRating({ rating }: { rating: number }) {
         <Star
           key={index}
           size={10}
-          color={index < rating ? '#F5A623' : '#E1E4EA'}
-          fill={index < rating ? '#F5A623' : '#E1E4EA'}
+          color={index < rating ? colors.star : colors.borderLight}
+          fill={index < rating ? colors.star : colors.borderLight}
         />
       ))}
     </View>
@@ -277,7 +287,7 @@ function StarRating({ rating }: { rating: number }) {
 
 function OfferCard({ offer }: { offer: Offer }) {
   return (
-    <View style={[tw`mt-4 rounded-2xl p-4`, { borderWidth: 1, borderColor: '#EDEEF0' }]}>
+    <View style={[tw`mt-4 rounded-2xl p-4`, { borderWidth: 1, borderColor: colors.borderCard }]}>
       <View style={tw`flex-row items-start justify-between`}>
         <View style={tw`flex-1 flex-row items-center gap-2.5`}>
           <View
@@ -294,11 +304,11 @@ function OfferCard({ offer }: { offer: Offer }) {
               <Text fontWeight="bold" fontSize={14} classN="text-black">
                 {offer.name}
               </Text>
-              <BadgeCheck size={13} color={ACCENT_TEAL} fill={ACCENT_TEAL} />
+              <BadgeCheck size={13} color={colors.brand} fill={colors.brand} />
             </View>
             <View style={tw`mt-1 flex-row items-center gap-1.5`}>
               <StarRating rating={offer.rating} />
-              <Text fontSize={11} classN="text-[#9AA0A6]">
+              <Text fontSize={11} classN={`text-[${colors.textMuted}]`}>
                 ({offer.tasksCompleted} Tasks)
               </Text>
             </View>
@@ -308,7 +318,7 @@ function OfferCard({ offer }: { offer: Offer }) {
           <Text fontWeight="bold" fontSize={15} classN="text-black">
             {offer.price}
           </Text>
-          <Text fontSize={11} classN="mt-0.5 text-[#9AA0A6]">
+          <Text fontSize={11} classN={`mt-0.5 text-[${colors.textMuted}]`}>
             {offer.priceLabel}
           </Text>
         </View>
@@ -319,8 +329,8 @@ function OfferCard({ offer }: { offer: Offer }) {
           <Text fontWeight="bold" fontSize={11} classN="text-black">
             Reasons for counter offer
           </Text>
-          <View style={[tw`mt-1.5 rounded-xl px-3 py-2.5`, { backgroundColor: SURFACE }]}>
-            <Text fontSize={12} classN="italic text-[#6B7075]">
+          <View style={[tw`mt-1.5 rounded-xl px-3 py-2.5`, { backgroundColor: colors.surface }]}>
+            <Text fontSize={12} classN={`italic text-[${colors.textSecondary}]`}>
               &ldquo;{offer.reason}&rdquo;
             </Text>
           </View>
@@ -333,7 +343,7 @@ function OfferCard({ offer }: { offer: Offer }) {
             <Pressable
               style={[
                 tw`flex-1 items-center justify-center rounded-full py-3`,
-                { borderWidth: 1, borderColor: BORDER },
+                { borderWidth: 1, borderColor: colors.borderLight },
               ]}>
               <Text fontWeight="bold" fontSize={13} classN="text-black">
                 Accept
@@ -342,7 +352,7 @@ function OfferCard({ offer }: { offer: Offer }) {
             <Pressable
               style={[
                 tw`flex-1 items-center justify-center rounded-full py-3`,
-                { backgroundColor: ACCENT_TEAL },
+                { backgroundColor: colors.brand },
               ]}>
               <Text fontWeight="bold" fontSize={13} classN="text-white">
                 Counter
@@ -351,7 +361,7 @@ function OfferCard({ offer }: { offer: Offer }) {
             <Pressable
               style={[
                 tw`flex-1 items-center justify-center rounded-full py-3`,
-                { borderWidth: 1, borderColor: BORDER },
+                { borderWidth: 1, borderColor: colors.borderLight },
               ]}>
               <Text fontWeight="bold" fontSize={13} classN="text-black">
                 Decline
@@ -363,7 +373,7 @@ function OfferCard({ offer }: { offer: Offer }) {
             <Pressable
               style={[
                 tw`flex-1 items-center justify-center rounded-full py-3`,
-                { backgroundColor: ACCENT_TEAL },
+                { backgroundColor: colors.brand },
               ]}>
               <Text fontWeight="bold" fontSize={13} classN="text-white">
                 Start Task
@@ -372,7 +382,7 @@ function OfferCard({ offer }: { offer: Offer }) {
             <Pressable
               style={[
                 tw`flex-1 items-center justify-center rounded-full py-3`,
-                { borderWidth: 1, borderColor: BORDER },
+                { borderWidth: 1, borderColor: colors.borderLight },
               ]}>
               <Text fontWeight="bold" fontSize={13} classN="text-black">
                 Cancel
@@ -403,7 +413,7 @@ export function ReviewOffersSheet({
       <Text fontWeight="black" fontSize={20} classN="text-black">
         Review offers
       </Text>
-      <Text fontSize={13} classN="mt-1.5 text-[#6B7075]">
+      <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
         {offerCount} Sidekicks offered on &ldquo;{taskTitle}&rdquo;
       </Text>
 
@@ -423,12 +433,10 @@ export function ReviewOffersSheet({
   );
 }
 
-const SUMMARY_TINT = '#EAF5F5';
-
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={tw`flex-row items-center justify-between py-2`}>
-      <Text fontSize={13} classN="text-[#6B7075]">
+      <Text fontSize={13} classN={`text-[${colors.textSecondary}]`}>
         {label}
       </Text>
       <Text fontWeight="bold" fontSize={13} classN="text-black">
@@ -465,7 +473,7 @@ export function TaskSummarySheet({
         Task Summary
       </Text>
 
-      <View style={[tw`mt-4 rounded-2xl px-4 py-1`, { backgroundColor: SUMMARY_TINT }]}>
+      <View style={[tw`mt-4 rounded-2xl px-4 py-1`, { backgroundColor: colors.brandTintSubtle }]}>
         <SummaryRow label="Category" value={category} />
         <SummaryRow label="Location" value={location} />
         <SummaryRow label="Price" value={price} />
@@ -507,7 +515,7 @@ export function EscrowPaymentSheet({
       <Text fontWeight="black" fontSize={20} classN="text-black">
         Fund escrow to post
       </Text>
-      <Text fontSize={13} classN="mt-1.5 text-[#6B7075]">
+      <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
         Held safely until you confirm the task is done. Released only on your approval.
       </Text>
 
@@ -517,7 +525,7 @@ export function EscrowPaymentSheet({
         <View
           style={[
             tw`mt-1 flex-row items-center justify-between pt-3`,
-            { borderTopWidth: 1, borderTopColor: BORDER },
+            { borderTopWidth: 1, borderTopColor: colors.borderLight },
           ]}>
           <Text fontWeight="bold" fontSize={14} classN="text-black">
             Total
@@ -528,8 +536,8 @@ export function EscrowPaymentSheet({
         </View>
       </View>
 
-      <View style={[tw`mt-4 rounded-xl px-3 py-2.5`, { backgroundColor: SUMMARY_TINT }]}>
-        <Text fontSize={12} classN="text-[#3F7A7D]">
+      <View style={[tw`mt-4 rounded-xl px-3 py-2.5`, { backgroundColor: colors.brandTintSubtle }]}>
+        <Text fontSize={12} classN={`text-[${colors.brandDark}]`}>
           Full refund if no Sidekick is matched within 24 hours.
         </Text>
       </View>
@@ -554,7 +562,7 @@ export function PaymentSuccessSheet({ visible, onBackHome }: PaymentSuccessSheet
         <View
           style={[
             tw`h-16 w-16 items-center justify-center rounded-full`,
-            { backgroundColor: '#2F9E56' },
+            { backgroundColor: colors.success },
           ]}>
           <Check size={32} color="white" strokeWidth={3} />
         </View>
@@ -562,7 +570,7 @@ export function PaymentSuccessSheet({ visible, onBackHome }: PaymentSuccessSheet
         <Text fontWeight="black" fontSize={19} classN="mt-4 text-black">
           Success
         </Text>
-        <Text fontSize={13} classN="mt-1.5 text-center text-[#6B7075]">
+        <Text fontSize={13} classN={`mt-1.5 text-center text-[${colors.textSecondary}]`}>
           You have successfully sent money into your Escrow Wallet
         </Text>
 

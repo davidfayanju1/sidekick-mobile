@@ -9,9 +9,7 @@ import { CARD_SHADOW, formatNaira } from '@/components/UI/TaskParts';
 import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
 import { useRoleStore } from '@/store/roleStore';
-
-const ACCENT_TEAL = '#489A9F';
-const SUCCESS = '#2F9E56';
+import { colors } from '@/theme/palette';
 
 export type TransactionType = 'payment' | 'refund' | 'earning' | 'withdrawal';
 
@@ -103,10 +101,10 @@ export const SIDEKICK_TRANSACTIONS: Transaction[] = [
 ];
 
 const TYPE_META: Record<TransactionType, { icon: typeof ArrowUpRight; color: string }> = {
-  payment: { icon: ArrowUpRight, color: '#D1573B' },
-  refund: { icon: ArrowDownLeft, color: SUCCESS },
-  earning: { icon: ArrowDownLeft, color: SUCCESS },
-  withdrawal: { icon: Landmark, color: '#B5762E' },
+  payment: { icon: ArrowUpRight, color: colors.dangerText },
+  refund: { icon: ArrowDownLeft, color: colors.success },
+  earning: { icon: ArrowDownLeft, color: colors.success },
+  withdrawal: { icon: Landmark, color: colors.pendingText },
 };
 
 const HERO_FILTERS: { key: 'all' | TransactionType; label: string }[] = [
@@ -122,9 +120,9 @@ const SIDEKICK_FILTERS: { key: 'all' | TransactionType; label: string }[] = [
 ];
 
 export function TransactionRow({ transaction }: { transaction: Transaction }) {
-  const { colors } = useColorScheme();
-  const fg = twColor(colors.foreground);
-  const muted = twColor(colors.mutedForeground);
+  const { colors: systemColors } = useColorScheme();
+  const fg = twColor(systemColors.foreground);
+  const muted = twColor(systemColors.mutedForeground);
   const { icon: Icon, color } = TYPE_META[transaction.type];
   const isCredit = transaction.amount > 0;
 
@@ -132,7 +130,7 @@ export function TransactionRow({ transaction }: { transaction: Transaction }) {
     <View
       style={[
         tw`flex-row items-center gap-3 rounded-2xl p-3.5`,
-        { backgroundColor: colors.card },
+        { backgroundColor: systemColors.card },
         CARD_SHADOW,
       ]}>
       <View
@@ -151,7 +149,10 @@ export function TransactionRow({ transaction }: { transaction: Transaction }) {
           {transaction.status === 'pending' ? ' • Pending' : ''}
         </Text>
       </View>
-      <Text fontWeight="bold" fontSize={14} classN={`text-[${isCredit ? twColor(SUCCESS) : fg}]`}>
+      <Text
+        fontWeight="bold"
+        fontSize={14}
+        classN={`text-[${isCredit ? twColor(colors.success) : fg}]`}>
         {isCredit ? '+' : '-'}
         {formatNaira(Math.abs(transaction.amount))}
       </Text>
@@ -160,11 +161,11 @@ export function TransactionRow({ transaction }: { transaction: Transaction }) {
 }
 
 export default function PaymentHistory() {
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
   const role = useRoleStore((state) => state.role);
   const isSidekick = role === 'sidekick';
-  const fg = twColor(colors.foreground);
-  const muted = twColor(colors.mutedForeground);
+  const fg = twColor(systemColors.foreground);
+  const muted = twColor(systemColors.mutedForeground);
 
   const transactions = isSidekick ? SIDEKICK_TRANSACTIONS : HERO_TRANSACTIONS;
   const filters = isSidekick ? SIDEKICK_FILTERS : HERO_FILTERS;
@@ -175,11 +176,11 @@ export default function PaymentHistory() {
 
   return (
     <SafeAreaView
-      style={[tw`flex-1`, { backgroundColor: colors.background }]}
+      style={[tw`flex-1`, { backgroundColor: systemColors.background }]}
       edges={['top', 'bottom']}>
       <View style={tw`flex-row items-center gap-3 px-4 pb-3 pt-2`}>
         <Pressable onPress={() => router.back()} hitSlop={8}>
-          <ChevronLeft size={24} color={colors.foreground} />
+          <ChevronLeft size={24} color={systemColors.foreground} />
         </Pressable>
         <Text fontWeight="bold" fontSize={16} classN={`text-[${fg}]`}>
           Payment History
@@ -196,8 +197,8 @@ export default function PaymentHistory() {
               style={[
                 tw`rounded-full px-4 py-2`,
                 isActive
-                  ? { backgroundColor: ACCENT_TEAL }
-                  : { borderWidth: 1, borderColor: colors.grey5 },
+                  ? { backgroundColor: colors.brand }
+                  : { borderWidth: 1, borderColor: systemColors.grey5 },
               ]}>
               <Text
                 fontWeight="medium"

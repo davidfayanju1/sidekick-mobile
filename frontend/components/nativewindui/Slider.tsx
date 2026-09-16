@@ -10,13 +10,15 @@ function Slider({
   maximumTrackTintColor,
   ...props
 }: React.ComponentProps<typeof RNSlider>) {
-  const { colors } = useColorScheme();
+  const { colors: systemColors } = useColorScheme();
   return (
     <RNSlider
-      thumbTintColor={(thumbTintColor ?? Platform.OS === 'ios') ? COLORS.white : colors.primary}
-      minimumTrackTintColor={minimumTrackTintColor ?? colors.primary}
+      thumbTintColor={
+        (thumbTintColor ?? Platform.OS === 'ios') ? COLORS.white : systemColors.primary
+      }
+      minimumTrackTintColor={minimumTrackTintColor ?? systemColors.primary}
       maximumTrackTintColor={
-        (maximumTrackTintColor ?? Platform.OS === 'android') ? colors.primary : undefined
+        (maximumTrackTintColor ?? Platform.OS === 'android') ? systemColors.primary : undefined
       }
       minimumValue={0}
       maximumValue={1}

@@ -68,9 +68,9 @@ export function TaskTimeline({
   steps: TimelineStep[];
   currentStep: number;
 }) {
-  const { colors } = useColorScheme();
-  const fg = twColor(colors.foreground);
-  const muted = twColor(colors.mutedForeground);
+  const { colors: systemColors } = useColorScheme();
+  const fg = twColor(systemColors.foreground);
+  const muted = twColor(systemColors.mutedForeground);
 
   return (
     <View style={tw`mt-1`}>
@@ -92,8 +92,8 @@ export function TaskTimeline({
                       ? { backgroundColor: ACCENT_TEAL }
                       : {
                           borderWidth: 1.5,
-                          borderColor: colors.grey4,
-                          backgroundColor: colors.card,
+                          borderColor: systemColors.grey4,
+                          backgroundColor: systemColors.card,
                         },
                   ]}>
                   {isDone ? (
@@ -102,7 +102,7 @@ export function TaskTimeline({
                     <View
                       style={[
                         tw`h-2 w-2 rounded-full`,
-                        { backgroundColor: isCurrent ? 'white' : colors.grey4 },
+                        { backgroundColor: isCurrent ? 'white' : systemColors.grey4 },
                       ]}
                     />
                   )}
@@ -112,7 +112,7 @@ export function TaskTimeline({
                 <View
                   style={[
                     tw`w-px flex-1`,
-                    { backgroundColor: isDone ? ACCENT_TEAL : colors.grey4, minHeight: 22 },
+                    { backgroundColor: isDone ? ACCENT_TEAL : systemColors.grey4, minHeight: 22 },
                   ]}
                 />
               )}

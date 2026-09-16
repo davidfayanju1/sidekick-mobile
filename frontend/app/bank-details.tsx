@@ -9,10 +9,7 @@ import Form from '@/components/UI/Form';
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
 import { useRoleStore } from '@/store/roleStore';
-
-const ACCENT_TEAL = '#489A9F';
-const BORDER = '#DADADA';
-const MUTED = '#9AA0A6';
+import { colors } from '@/theme/palette';
 
 const BANKS = [
   'Access Bank',
@@ -58,13 +55,13 @@ export default function BankDetails() {
           onPress={() => router.back()}
           hitSlop={8}
           style={tw`-ml-2 mt-3 h-10 w-10 items-center justify-center`}>
-          <ChevronLeft size={26} color="#000" />
+          <ChevronLeft size={26} color={colors.iconPrimary} />
         </Pressable>
 
         <Text fontWeight="bold" fontSize={22} classN="mt-2 text-black">
           Add bank details
         </Text>
-        <Text fontSize={13} classN="mt-1.5 text-[#6B7075]">
+        <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
           This is where your earnings are sent when you withdraw.
         </Text>
 
@@ -74,12 +71,12 @@ export default function BankDetails() {
             onPress={() => setBankSheetVisible(true)}
             style={[
               tw`mt-2 flex-row items-center justify-between rounded-full px-4`,
-              { height: 52, borderWidth: 1, borderColor: BORDER },
+              { height: 52, borderWidth: 1, borderColor: colors.border },
             ]}>
-            <Text fontSize={14} classN={bank ? 'text-black' : `text-[${MUTED}]`}>
+            <Text fontSize={14} classN={bank ? 'text-black' : `text-[${colors.textMuted}]`}>
               {bank ?? 'Select bank'}
             </Text>
-            <ChevronDown size={18} color={MUTED} />
+            <ChevronDown size={18} color={colors.textMuted} />
           </Pressable>
         </View>
 
@@ -110,7 +107,7 @@ export default function BankDetails() {
           onPress={handleSave}
           style={[
             tw`mt-8 items-center justify-center rounded-full py-4`,
-            { backgroundColor: ACCENT_TEAL, opacity: canSave ? 1 : 0.5 },
+            { backgroundColor: colors.brand, opacity: canSave ? 1 : 0.5 },
           ]}>
           <Text fontWeight="bold" fontSize={15} classN="text-white">
             Save bank details
@@ -134,12 +131,12 @@ export default function BankDetails() {
                 }}
                 style={[
                   tw`flex-row items-center justify-between rounded-2xl px-4 py-3.5`,
-                  isSelected && { backgroundColor: '#F5F6F7' },
+                  isSelected && { backgroundColor: colors.surface },
                 ]}>
                 <Text fontWeight={isSelected ? 'bold' : 'normal'} fontSize={14} classN="text-black">
                   {item}
                 </Text>
-                {isSelected && <Check size={18} color={ACCENT_TEAL} />}
+                {isSelected && <Check size={18} color={colors.brand} />}
               </Pressable>
             );
           })}

@@ -19,8 +19,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
+import { colors } from '@/theme/palette';
 
-const ACCENT_TEAL = '#489A9F';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const SLIDES = [
@@ -74,7 +74,7 @@ function Slide({
           <Text fontWeight="bold" fontSize={26} classN="text-black">
             {slide.title}
           </Text>
-          <Text fontSize={14} classN="mt-3 text-[#9AA0A6]">
+          <Text fontSize={14} classN={`mt-3 text-[${colors.textMuted}]`}>
             {slide.subtitle}
           </Text>
         </Animated.View>
@@ -95,7 +95,7 @@ function Dot({ index, scrollX }: { index: number; scrollX: SharedValue<number> }
     return { width, opacity };
   });
   return (
-    <Animated.View style={[tw`h-1.5 rounded-full`, { backgroundColor: ACCENT_TEAL }, style]} />
+    <Animated.View style={[tw`h-1.5 rounded-full`, { backgroundColor: colors.brand }, style]} />
   );
 }
 
@@ -117,7 +117,7 @@ function SkipButton({
       pointerEvents={interactive ? 'auto' : 'none'}
       style={[tw`items-end px-6 pt-2`, style]}>
       <TouchableOpacity onPress={onPress} hitSlop={8} activeOpacity={0.6}>
-        <Text fontSize={15} classN="text-[#9AA0A6]">
+        <Text fontSize={15} classN={`text-[${colors.textMuted}]`}>
           Skip
         </Text>
       </TouchableOpacity>
@@ -184,7 +184,7 @@ export default function Onboarding() {
           activeOpacity={0.8}
           style={[
             tw`items-center justify-center rounded-full py-4`,
-            { backgroundColor: ACCENT_TEAL },
+            { backgroundColor: colors.brand },
           ]}>
           <Text fontWeight="bold" fontSize={16} classN="text-white">
             {isLastSlide ? 'Get Started' : 'Continue'}

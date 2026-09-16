@@ -14,13 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
 import { useRoleStore } from '@/store/roleStore';
-
-const ACCENT_TEAL = '#489A9F';
-const BORDER = '#E1E4EA';
-const SURFACE = '#F5F6F7';
-const SUCCESS = '#2F9E56';
-const PENDING_BG = '#F5E6D3';
-const PENDING_TEXT = '#B5762E';
+import { colors } from '@/theme/palette';
 
 type Step = {
   key: string;
@@ -81,13 +75,13 @@ export default function GetStarted() {
           onPress={() => router.back()}
           hitSlop={8}
           style={tw`-ml-2 mt-3 h-10 w-10 items-center justify-center`}>
-          <ChevronLeft size={26} color="#000" />
+          <ChevronLeft size={26} color={colors.iconPrimary} />
         </Pressable>
 
         <Text fontWeight="bold" fontSize={22} classN="mt-2 text-black">
           {isSidekick ? "Let's get you set up as a Sidekick" : "Let's get you set up as a Hero"}
         </Text>
-        <Text fontSize={13} classN="mt-1.5 text-[#6B7075]">
+        <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
           A couple of quick steps before you {isSidekick ? 'start earning' : 'start posting'}. You
           can also do these later from your profile.
         </Text>
@@ -99,20 +93,20 @@ export default function GetStarted() {
               onPress={onPress}
               style={[
                 tw`flex-row items-center gap-3 rounded-2xl p-4`,
-                { borderWidth: 1, borderColor: BORDER },
+                { borderWidth: 1, borderColor: colors.borderLight },
               ]}>
               <View
                 style={[
                   tw`h-11 w-11 items-center justify-center rounded-xl`,
-                  { backgroundColor: done ? '#DCF5E3' : SURFACE },
+                  { backgroundColor: done ? colors.successBg : colors.surface },
                 ]}>
-                <Icon size={20} color={done ? SUCCESS : '#4B5054'} />
+                <Icon size={20} color={done ? colors.success : colors.textDisabled} />
               </View>
               <View style={tw`flex-1`}>
                 <Text fontWeight="bold" fontSize={14} classN="text-black">
                   {title}
                 </Text>
-                <Text fontSize={12} classN="mt-0.5 text-[#6B7075]">
+                <Text fontSize={12} classN={`mt-0.5 text-[${colors.textSecondary}]`}>
                   {description}
                 </Text>
               </View>
@@ -120,18 +114,18 @@ export default function GetStarted() {
                 <View
                   style={[
                     tw`h-6 w-6 items-center justify-center rounded-full`,
-                    { backgroundColor: SUCCESS },
+                    { backgroundColor: colors.success },
                   ]}>
                   <Check size={13} color="white" strokeWidth={3} />
                 </View>
               ) : pending ? (
-                <View style={[tw`rounded-full px-2.5 py-1`, { backgroundColor: PENDING_BG }]}>
-                  <Text fontSize={11} classN={`text-[${PENDING_TEXT}]`}>
+                <View style={[tw`rounded-full px-2.5 py-1`, { backgroundColor: colors.pendingBg }]}>
+                  <Text fontSize={11} classN={`text-[${colors.pendingText}]`}>
                     Pending
                   </Text>
                 </View>
               ) : (
-                <ChevronRight size={18} color="#9AA0A6" />
+                <ChevronRight size={18} color={colors.textMuted} />
               )}
             </Pressable>
           ))}
@@ -141,13 +135,13 @@ export default function GetStarted() {
           onPress={() => router.replace('/(tabs)')}
           style={[
             tw`mt-8 items-center justify-center rounded-full py-4`,
-            { backgroundColor: ACCENT_TEAL },
+            { backgroundColor: colors.brand },
           ]}>
           <Text fontWeight="bold" fontSize={15} classN="text-white">
             Continue to {isSidekick ? 'Sidekick' : 'Hero'} home
           </Text>
         </Pressable>
-        <Text fontSize={12} classN="mt-3 text-center text-[#9AA0A6]">
+        <Text fontSize={12} classN={`mt-3 text-center text-[${colors.textMuted}]`}>
           You can finish these anytime from your profile.
         </Text>
       </ScrollView>
