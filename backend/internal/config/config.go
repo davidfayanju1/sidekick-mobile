@@ -40,36 +40,46 @@ func CurrentEnv() Env {
 	}
 }
 
-// databaseURLForEnv returns ONLY the connection string for the given env.
+// databaseURLForEnv returns the connection string for the given env.
+// Falls back to DATABASE_URL if the env-specific var is not set.
 func databaseURLForEnv(e Env) (string, bool) {
 	switch e {
 	case EnvStaging:
-		return os.Getenv("DATABASE_URL_STAGING"), os.Getenv("DATABASE_URL_STAGING") != ""
+		if v := os.Getenv("DATABASE_URL_STAGING"); v != "" {
+			return v, true
+		}
 	case EnvProd:
-		return os.Getenv("DATABASE_URL_PROD"), os.Getenv("DATABASE_URL_PROD") != ""
+		if v := os.Getenv("DATABASE_URL_PROD"); v != "" {
+			return v, true
+		}
 	default:
 		if v := os.Getenv("DATABASE_URL_DEV"); v != "" {
 			return v, true
 		}
-		// Single-URL escape hatch (local dev / CI).
-		v := os.Getenv("DATABASE_URL")
-		return v, v != ""
 	}
+	// Fallback to generic DATABASE_URL for all envs.
+	v := os.Getenv("DATABASE_URL")
+	return v, v != ""
 }
 
 func jwtSecretForEnv(e Env) (string, bool) {
 	switch e {
 	case EnvStaging:
-		return os.Getenv("JWT_SECRET_STAGING"), os.Getenv("JWT_SECRET_STAGING") != ""
+		if v := os.Getenv("JWT_SECRET_STAGING"); v != "" {
+			return v, true
+		}
 	case EnvProd:
-		return os.Getenv("JWT_SECRET_PROD"), os.Getenv("JWT_SECRET_PROD") != ""
+		if v := os.Getenv("JWT_SECRET_PROD"); v != "" {
+			return v, true
+		}
 	default:
 		if v := os.Getenv("JWT_SECRET_DEV"); v != "" {
 			return v, true
 		}
-		v := os.Getenv("JWT_SECRET")
-		return v, v != ""
 	}
+	// Fallback to generic JWT_SECRET for all envs.
+	v := os.Getenv("JWT_SECRET")
+	return v, v != ""
 }
 
 func Load() (*Config, error) {
