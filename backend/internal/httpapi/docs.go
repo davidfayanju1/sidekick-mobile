@@ -1,5 +1,5 @@
-// Scalar/OpenAPI docs: GET /openapi.yaml serves the embedded spec,
-// GET /docs serves the Scalar API reference UI pointed at it.
+// Scalar/OpenAPI docs and Swagger UI: GET /openapi.yaml serves the embedded spec,
+// GET /docs serves Scalar, GET /swagger serves Swagger UI.
 package httpapi
 
 import (
@@ -28,6 +28,49 @@ const scalarHTML = `<!doctype html>
 </body>
 </html>`
 
+const swaggerHTML = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Sidekick API - Swagger UI</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css"/>
+  <style>
+    html { box-sizing: border-box; }
+    *, *:before, *:after { box-sizing: inherit; }
+    body { margin: 0; padding: 0; }
+    .swagger-ui .topbar { display: none; }
+    .swagger-ui .info .title { font-size: 2em; }
+    .swagger-ui .scheme-container { background: none; box-shadow: none; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    SwaggerUIBundle({
+      url: '/openapi.yaml',
+      dom_id: '#swagger-ui',
+      deepLinking: true,
+      presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIStandalonePreset
+      ],
+      layout: 'StandaloneLayout',
+      defaultModelsExpandDepth: 3,
+      defaultModelExpandDepth: 3,
+      docExpansion: 'list',
+      filter: true,
+      tryItOutEnabled: true,
+      requestSnippetsEnabled: true,
+      supportedSubmitMethods: ['get','put','post','delete','patch','options','head'],
+      plugins: [],
+      validatorUrl: null
+    });
+  </script>
+</body>
+</html>`
+
 func (s *Server) registerDocsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
@@ -38,5 +81,9 @@ func (s *Server) registerDocsRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /docs", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Write([]byte(scalarHTML))
+	})
+	mux.HandleFunc("GET /swagger", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write([]byte(swaggerHTML))
 	})
 }
