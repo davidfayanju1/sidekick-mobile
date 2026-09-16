@@ -40,61 +40,53 @@ func CurrentEnv() Env {
 	}
 }
 
-// databaseURLForEnv returns the connection string for the given env.
-// Falls back to DATABASE_URL if the env-specific var is not set.
-func databaseURLForEnv(e Env) (string, bool) {
-	switch e {
-	case EnvStaging:
-		if v := os.Getenv("DATABASE_URL_STAGING"); v != "" {
-			return v, true
-		}
-	case EnvProd:
-		if v := os.Getenv("DATABASE_URL_PROD"); v != "" {
-			return v, true
-		}
-	default:
-		if v := os.Getenv("DATABASE_URL_DEV"); v != "" {
-			return v, true
+// firstNonEmpty returns the first non-empty value, or "".
+func firstNonEmpty(vals ...string) string {
+	for _, v := range vals {
+		if v != "" {
+			return v
 		}
 	}
-	// Fallback to generic DATABASE_URL for all envs.
-	v := os.Getenv("DATABASE_URL")
+	return ""
+}
+
+// databaseURL returns the database connection string.
+// Priority: env-specific (DATABASE_URL_<ENV>) > generic (DATABASE_URL).
+func databaseURL(e Env) (string, bool) {
+	v := firstNonEmpty(
+		os.Getenv("DATABASE_URL_"+strings.ToUpper(string(e))),
+		os.Getenv("DATABASE_URL"),
+	)
 	return v, v != ""
 }
 
-func jwtSecretForEnv(e Env) (string, bool) {
-	switch e {
-	case EnvStaging:
-		if v := os.Getenv("JWT_SECRET_STAGING"); v != "" {
-			return v, true
-		}
-	case EnvProd:
-		if v := os.Getenv("JWT_SECRET_PROD"); v != "" {
-			return v, true
-		}
-	default:
-		if v := os.Getenv("JWT_SECRET_DEV"); v != "" {
-			return v, true
-		}
-	}
-	// Fallback to generic JWT_SECRET for all envs.
-	v := os.Getenv("JWT_SECRET")
+// jwtSecret returns the JWT signing secret.
+// Priority: env-specific (JWT_SECRET_<ENV>) > generic (JWT_SECRET).
+func jwtSecret(e Env) (string, bool) {
+	v := firstNonEmpty(
+		os.Getenv("JWT_SECRET_"+strings.ToUpper(string(e))),
+		os.Getenv("JWT_SECRET"),
+	)
 	return v, v != ""
 }
 
 func Load() (*Config, error) {
 	e := CurrentEnv()
-	db, ok := databaseURLForEnv(e)
+
+	db, ok := databaseURL(e)
 	if !ok {
-		return nil, fmt.Errorf("missing database URL for env %q (set DATABASE_URL_%s)", e, strings.ToUpper(string(e)))
+		return nil, fmt.Errorf("missing database URL: set DATABASE_URL or DATABASE_URL_%s", strings.ToUpper(string(e)))
 	}
-	secret, ok := jwtSecretForEnv(e)
+
+	secret, ok := jwtSecret(e)
 	if !ok {
-		return nil, fmt.Errorf("missing JWT secret for env %q (set JWT_SECRET_%s)", e, strings.ToUpper(string(e)))
+		return nil, fmt.Errorf("missing JWT secret: set JWT_SECRET or JWT_SECRET_%s", strings.ToUpper(string(e)))
 	}
+
 	if len(secret) < 32 {
-		return nil, fmt.Errorf("JWT secret for env %q must be at least 32 chars", e)
+		return nil, fmt.Errorf("JWT secret must be at least 32 chars (got %d)", len(secret))
 	}
+
 	return &Config{
 		Env:            e,
 		DatabaseURL:    db,
@@ -103,13 +95,4 @@ func Load() (*Config, error) {
 		S3Region:       firstNonEmpty(os.Getenv("S3_REGION"), "eu-west-2"),
 		S3BucketPrefix: os.Getenv("S3_BUCKET_PREFIX"),
 	}, nil
-}
-
-func firstNonEmpty(vals ...string) string {
-	for _, v := range vals {
-		if v != "" {
-			return v
-		}
-	}
-	return ""
 }
