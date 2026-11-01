@@ -1,15 +1,23 @@
 import { router } from 'expo-router';
 import { Check, ChevronDown, ChevronLeft } from 'lucide-react-native';
 import * as React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BottomSheet from '@/components/UI/BottomSheet';
 import Form from '@/components/UI/Form';
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
+import { Button } from '@/components/UI/Button';
+import { useAddPayoutMethod } from '@/lib/api/finance';
+import { errorMessage } from '@/lib/axios';
+import { bankDetailsSchema } from '@/lib/forms/schemas';
+import { useZodForm } from '@/lib/forms/useZodForm';
+import { locale } from '@/lib/locale';
 import { useRoleStore } from '@/store/roleStore';
+import { toast } from '@/store/toastStore';
 import { colors } from '@/theme/palette';
+import { PressableScale } from '@/components/UI/PressableScale';
 
 const BANKS = [
   'Access Bank',
@@ -24,7 +32,7 @@ const BANKS = [
 
 function FieldLabel({ children }: { children: string }) {
   return (
-    <Text fontWeight="medium" fontSize={13} classN="text-black">
+    <Text variant="caption" fontWeight="medium" classN="text-black">
       {children}
     </Text>
   );
@@ -32,17 +40,33 @@ function FieldLabel({ children }: { children: string }) {
 
 export default function BankDetails() {
   const setBankDetailsAdded = useRoleStore((state) => state.setBankDetailsAdded);
-  const [bank, setBank] = React.useState<string | null>(null);
+  const addPayoutMethod = useAddPayoutMethod();
   const [bankSheetVisible, setBankSheetVisible] = React.useState(false);
-  const [accountNumber, setAccountNumber] = React.useState('');
-  const [accountName, setAccountName] = React.useState('');
 
-  const canSave = Boolean(bank && accountNumber.length === 10 && accountName);
+  const form = useZodForm(bankDetailsSchema, {
+    bank_name: '',
+    account_number: '',
+    account_name: '',
+  });
 
-  const handleSave = () => {
-    setBankDetailsAdded(true);
-    router.back();
-  };
+  const bank = (form.values.bank_name as string) || null;
+
+  const handleSave = form.handleSubmit(async (details) => {
+    try {
+      await addPayoutMethod.mutateAsync({
+        last4: details.account_number.slice(-4),
+        bank_name: details.bank_name,
+      });
+
+      setBankDetailsAdded(true);
+      toast.success('Bank details saved', {
+        description: `${details.bank_name} •••• ${details.account_number.slice(-4)}`,
+      });
+      router.back();
+    } catch (error) {
+      toast.error('Couldn’t save your bank details', { description: errorMessage(error) });
+    }
+  });
 
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
@@ -51,33 +75,33 @@ export default function BankDetails() {
         contentContainerStyle={{ paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        <Pressable
+        <PressableScale
           onPress={() => router.back()}
           hitSlop={8}
-          style={tw`-ml-2 mt-3 h-10 w-10 items-center justify-center`}>
-          <ChevronLeft size={26} color={colors.iconPrimary} />
-        </Pressable>
+          style={tw`-ml-2 mt-2 h-10 w-10 items-center justify-center`}>
+          <ChevronLeft size={26} color={colors.black} />
+        </PressableScale>
 
-        <Text fontWeight="bold" fontSize={22} classN="mt-2 text-black">
+        <Text variant="title" classN="mt-2 text-black">
           Add bank details
         </Text>
-        <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
+        <Text variant="caption" classN={`mt-1.5 text-[${colors.gray700}]`}>
           This is where your earnings are sent when you withdraw.
         </Text>
 
         <View style={tw`mt-6`}>
           <FieldLabel>Bank</FieldLabel>
-          <Pressable
+          <PressableScale
             onPress={() => setBankSheetVisible(true)}
             style={[
               tw`mt-2 flex-row items-center justify-between rounded-full px-4`,
-              { height: 52, borderWidth: 1, borderColor: colors.border },
+              { height: 52, borderWidth: 1, borderColor: colors.gray300 },
             ]}>
-            <Text fontSize={14} classN={bank ? 'text-black' : `text-[${colors.textMuted}]`}>
+            <Text variant="body" classN={bank ? 'text-black' : `text-[${colors.gray500}]`}>
               {bank ?? 'Select bank'}
             </Text>
-            <ChevronDown size={18} color={colors.textMuted} />
-          </Pressable>
+            <ChevronDown size={18} color={colors.gray500} />
+          </PressableScale>
         </View>
 
         <Form
@@ -86,9 +110,15 @@ export default function BankDetails() {
           labelStyle="text-black"
           containerStyle="mt-5"
           placeholder="0123456789"
-          value={accountNumber}
-          onChangeText={(text) => setAccountNumber(text.replace(/[^0-9]/g, '').slice(0, 10))}
           keyboardType="number-pad"
+          maxLength={locale.bank.accountLength}
+          {...form.field('account_number')}
+          onChangeText={(text) =>
+            form.setValue(
+              'account_number',
+              text.replace(/[^0-9]/g, '').slice(0, locale.bank.accountLength)
+            )
+          }
         />
 
         <Form
@@ -97,47 +127,52 @@ export default function BankDetails() {
           labelStyle="text-black"
           containerStyle="mt-5"
           placeholder=""
-          value={accountName}
-          onChangeText={setAccountName}
           autoCapitalize="words"
+          {...form.field('account_name')}
         />
 
-        <Pressable
-          disabled={!canSave}
-          onPress={handleSave}
-          style={[
-            tw`mt-8 items-center justify-center rounded-full py-4`,
-            { backgroundColor: colors.brand, opacity: canSave ? 1 : 0.5 },
-          ]}>
-          <Text fontWeight="bold" fontSize={15} classN="text-white">
-            Save bank details
+        {form.errors.bank_name ? (
+          <Text variant="caption" classN={`ml-4 mt-1 text-[${colors.danger}]`}>
+            {form.errors.bank_name}
           </Text>
-        </Pressable>
+        ) : null}
+
+        <Button
+          label="Save bank details"
+          onPress={handleSave}
+          loading={addPayoutMethod.isPending}
+          succeeded={addPayoutMethod.isSuccess}
+          size="lg"
+          style={tw`mt-8`}
+        />
       </ScrollView>
 
       <BottomSheet visible={bankSheetVisible} onClose={() => setBankSheetVisible(false)}>
-        <Text fontWeight="black" fontSize={18} classN="text-black">
+        <Text variant="subhead" fontWeight="black" classN="text-black">
           Select bank
         </Text>
-        <View style={tw`mt-3`}>
+        <View style={tw`mt-2`}>
           {BANKS.map((item) => {
             const isSelected = item === bank;
             return (
-              <Pressable
+              <PressableScale
                 key={item}
                 onPress={() => {
-                  setBank(item);
+                  form.setValue('bank_name', item);
                   setBankSheetVisible(false);
                 }}
                 style={[
                   tw`flex-row items-center justify-between rounded-2xl px-4 py-3.5`,
-                  isSelected && { backgroundColor: colors.surface },
+                  isSelected && { backgroundColor: colors.gray50 },
                 ]}>
-                <Text fontWeight={isSelected ? 'bold' : 'normal'} fontSize={14} classN="text-black">
+                <Text
+                  variant="body"
+                  fontWeight={isSelected ? 'bold' : 'normal'}
+                  classN="text-black">
                   {item}
                 </Text>
-                {isSelected && <Check size={18} color={colors.brand} />}
-              </Pressable>
+                {isSelected && <Check size={18} color={colors.primary} />}
+              </PressableScale>
             );
           })}
         </View>

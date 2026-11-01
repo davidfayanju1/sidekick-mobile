@@ -10,7 +10,6 @@ import {
   Check,
   ChevronDown,
   ChevronLeft,
-  ClipboardList,
   Heart,
   Image as ImageIcon,
   ImageOff,
@@ -18,7 +17,7 @@ import {
   X,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { Image, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Image, Platform, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import BottomSheet from '@/components/UI/BottomSheet';
@@ -28,80 +27,31 @@ import {
   PaymentSuccessSheet,
   TaskSummarySheet,
 } from '@/components/UI/TaskSheets';
-import { browsableToTask, type BrowsableTask } from '@/components/UI/TaskParts';
+
 import { TaskSwipeCard, type TaskSwipeCardHandle } from '@/components/UI/TaskSwipeCard';
+import { EmptyState, ErrorState } from '@/components/UI/EmptyState';
+import { NothingNearby, OpenSlot } from '@/components/UI/illustrations';
+import { SkeletonTaskCard } from '@/components/UI/Skeleton';
+import { Spinner } from '@/components/UI/Spinner';
+import { toBrowsableTask } from '@/lib/api/adapters';
+import { usePaymentMethods } from '@/lib/api/finance';
+import { useTrackPostedTask } from '@/lib/api/myTasks';
+import { useCreateTask, useFeeQuote, useFundTask } from '@/lib/api/tasks';
+import { money } from '@/lib/format';
+import { locale } from '@/lib/locale';
+import { flattenFeed, useFeed } from '@/lib/api/discovery';
+import { useMakeOffer } from '@/lib/api/offers';
+import { errorMessage } from '@/lib/axios';
+import { geocode, useLocation } from '@/lib/useLocation';
 import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
 import { useRoleStore } from '@/store/roleStore';
 import { useTaskStore } from '@/store/taskStore';
-import { withOpacity } from '@/theme/with-opacity';
+import { toast } from '@/store/toastStore';
 import { colors } from '@/theme/palette';
+import { PressableScale } from '@/components/UI/PressableScale';
 
 const MAX_PHOTOS = 3;
-const PLATFORM_FEE_PERCENT = 0.5;
-
-const AVAILABLE_TASKS: BrowsableTask[] = [
-  {
-    id: 'a1',
-    category: 'Cleaning',
-    title: 'Weekly apartment cleaning',
-    description:
-      'Need a thorough clean of a 3-bedroom flat — kitchen, bathrooms, and living areas. Cleaning supplies provided.',
-    budget: '₦18,000',
-    location: 'Ikoyi',
-    distanceLabel: '1.2km away',
-    postedAgo: 'Posted 20 mins ago',
-    etaWindow: '2 - 3 hrs',
-    heroName: 'Chiamaka N.',
-    heroInitial: 'C',
-    heroRating: 5,
-  },
-  {
-    id: 'a2',
-    category: 'Delivery',
-    title: 'Pick up documents from Ikeja',
-    description:
-      'Need someone to pick up signed documents from an office in Ikeja and drop them off in Victoria Island by 4pm today.',
-    budget: '₦6,500',
-    location: 'Ikeja → Victoria Island',
-    distanceLabel: '3.4km away',
-    postedAgo: 'Posted 5 mins ago',
-    etaWindow: '45 mins - 1 hr',
-    heroName: 'Tobi A.',
-    heroInitial: 'T',
-    heroRating: 4,
-  },
-  {
-    id: 'a3',
-    category: 'Tech Help',
-    title: 'Set up new WiFi router',
-    description:
-      'Bought a new router and need help setting it up and connecting all devices in the house.',
-    budget: '₦8,000',
-    location: 'Lekki Phase 1',
-    distanceLabel: '900m away',
-    postedAgo: 'Posted 1 hr ago',
-    etaWindow: '30 - 45 mins',
-    heroName: 'Femi O.',
-    heroInitial: 'F',
-    heroRating: 5,
-  },
-  {
-    id: 'a4',
-    category: 'Handyman',
-    title: 'Fix a leaking kitchen sink',
-    description:
-      'Kitchen sink has been leaking for two days, needs a quick repair. Have the tools, just need the expertise.',
-    budget: '₦10,000',
-    location: 'Surulere',
-    distanceLabel: '2.1km away',
-    postedAgo: 'Posted 3 hrs ago',
-    etaWindow: '1 - 1.5 hrs',
-    heroName: 'Grace E.',
-    heroInitial: 'G',
-    heroRating: 4,
-  },
-];
 
 type WizardStep = 1 | 2;
 type ActiveSheet = 'summary' | 'escrow' | 'success' | null;
@@ -140,7 +90,7 @@ const CATEGORIES = [
 
 function FieldLabel({ children }: { children: string }) {
   return (
-    <Text fontWeight="medium" fontSize={13} classN="text-black">
+    <Text variant="caption" fontWeight="medium" classN="text-black">
       {children}
     </Text>
   );
@@ -148,52 +98,75 @@ function FieldLabel({ children }: { children: string }) {
 
 function BrowseTasks() {
   const { colors: systemColors } = useColorScheme();
-  const fg = twColor(systemColors.foreground);
-  const muted = twColor(systemColors.mutedForeground);
   const currentTask = useTaskStore((state) => state.sidekickCurrentTask);
-  const acceptTask = useTaskStore((state) => state.acceptTask);
-  const [queue, setQueue] = React.useState<BrowsableTask[]>(AVAILABLE_TASKS);
   const activeCardRef = React.useRef<TaskSwipeCardHandle>(null);
 
-  const handleSwiped = (direction: 'left' | 'right') => {
+  // Browsing is the screen that visibly needs a location, so it's the one that
+  // asks for it. Until a fix arrives the feed is unfiltered — the server only
+  // sorts and filters by distance when lat/lng are present — so this widens
+  // from "every open task" to "tasks near you" rather than gating the screen.
+  const { coords } = useLocation({ request: true });
+
+  const feed = useFeed(coords ? { limit: 20, lat: coords.lat, lng: coords.lng } : { limit: 20 });
+  const cards = React.useMemo(() => flattenFeed(feed.data?.pages), [feed.data]);
+
+  // Passed cards are remembered for the session only — the server has no
+  // "hide this from me" concept, so a refetch would otherwise bring them back.
+  const [passed, setPassed] = React.useState<string[]>([]);
+  const [offered, setOffered] = React.useState<string[]>([]);
+
+  const queue = React.useMemo(
+    () =>
+      cards
+        .filter((card) => !passed.includes(card.id) && !offered.includes(card.id))
+        .map(toBrowsableTask),
+    [cards, passed, offered]
+  );
+
+  const makeOffer = useMakeOffer(queue[0]?.id ?? '');
+
+  const handleSwiped = async (direction: 'left' | 'right') => {
     const current = queue[0];
-    setQueue((prev) => prev.slice(1));
-    if (direction === 'right' && current) {
-      acceptTask(browsableToTask(current));
-      router.push(`/task/${current.id}`);
+    if (!current) return;
+
+    if (direction === 'left') {
+      setPassed((previous) => [...previous, current.id]);
+      return;
+    }
+
+    // Swiping right sends an offer at the poster's budget — it does not assign
+    // the task. Only the poster can accept, via POST /offers/{id}/accept.
+    setOffered((previous) => [...previous, current.id]);
+    try {
+      await makeOffer.mutateAsync({});
+      toast.success('Offer sent', {
+        description: `${current.heroName} will be notified. You’ll hear back if they accept.`,
+      });
+    } catch (error) {
+      setOffered((previous) => previous.filter((id) => id !== current.id));
+      toast.error('Couldn’t send that offer', { description: errorMessage(error) });
     }
   };
 
+  // Pull the next page in before the deck runs dry, so it never stalls mid-swipe.
+  React.useEffect(() => {
+    if (queue.length <= 3 && feed.hasNextPage && !feed.isFetchingNextPage) {
+      feed.fetchNextPage();
+    }
+  }, [queue.length, feed]);
+
   if (currentTask) {
     return (
-      <SafeAreaView
-        style={[
-          tw`flex-1 items-center justify-center px-8`,
-          { backgroundColor: systemColors.background },
-        ]}>
-        <View
-          style={[
-            tw`h-14 w-14 items-center justify-center rounded-full`,
-            { backgroundColor: withOpacity(colors.brand, 0.12) },
-          ]}>
-          <ClipboardList size={24} color={colors.brand} />
-        </View>
-        <Text fontWeight="bold" fontSize={16} classN={`mt-4 text-center text-[${fg}]`}>
-          You already have a task in progress
-        </Text>
-        <Text fontSize={13} classN={`mt-1.5 text-center text-[${muted}]`}>
-          Finish &ldquo;{currentTask.title}&rdquo; before you can accept another one.
-        </Text>
-        <Pressable
-          onPress={() => router.push(`/task/${currentTask.id}`)}
-          style={[
-            tw`mt-5 items-center justify-center rounded-full px-6 py-3.5`,
-            { backgroundColor: colors.brand },
-          ]}>
-          <Text fontWeight="bold" fontSize={14} classN="text-white">
-            View current task
-          </Text>
-        </Pressable>
+      <SafeAreaView style={[tw`flex-1`, { backgroundColor: systemColors.background }]}>
+        <EmptyState
+          illustration={<OpenSlot />}
+          title="You already have a task in progress"
+          body={`Finish “${currentTask.title}” before you take on another one.`}
+          action={{
+            label: 'View current task',
+            onPress: () => router.push(`/task/${currentTask.id}`),
+          }}
+        />
       </SafeAreaView>
     );
   }
@@ -201,31 +174,37 @@ function BrowseTasks() {
   return (
     <SafeAreaView style={[tw`flex-1`, { backgroundColor: systemColors.background }]}>
       <View style={tw`px-4 pt-2`}>
-        <Text fontWeight="black" fontSize={22} classN={`text-[${fg}]`}>
+        <Text
+          variant="title"
+          fontWeight="black"
+          classN={`text-[${twColor(systemColors.foreground)}]`}>
           Browse tasks nearby
         </Text>
-        <Text fontSize={13} classN={`mt-1 text-[${muted}]`}>
-          Swipe right to accept, left to pass
+        <Text variant="caption" classN={`mt-1 text-[${twColor(systemColors.mutedForeground)}]`}>
+          Swipe right to offer, left to pass
         </Text>
       </View>
 
       <View style={tw`flex-1 px-4 pb-2 pt-5`}>
-        {queue.length === 0 ? (
-          <View style={tw`flex-1 items-center justify-center px-4`}>
-            <View
-              style={[
-                tw`h-14 w-14 items-center justify-center rounded-full`,
-                { backgroundColor: withOpacity(colors.brand, 0.12) },
-              ]}>
-              <ClipboardList size={24} color={colors.brand} />
-            </View>
-            <Text fontWeight="medium" fontSize={14} classN={`mt-3 text-[${fg}]`}>
-              You&rsquo;re all caught up
-            </Text>
-            <Text fontSize={12} classN={`mt-1 text-center text-[${muted}]`}>
-              Check back later for more tasks nearby
-            </Text>
+        {feed.isPending ? (
+          <View style={tw`gap-3`}>
+            {[0, 1, 2].map((index) => (
+              <SkeletonTaskCard key={index} index={index} />
+            ))}
           </View>
+        ) : feed.isError ? (
+          <ErrorState body={errorMessage(feed.error)} onRetry={() => feed.refetch()} />
+        ) : queue.length === 0 ? (
+          <EmptyState
+            illustration={<NothingNearby />}
+            title={passed.length > 0 ? 'That’s everything nearby' : 'No tasks nearby yet'}
+            body={
+              passed.length > 0
+                ? 'You’ve seen every open task in your area. New ones appear here as they’re posted.'
+                : 'Nothing has been posted around you yet. Check back shortly.'
+            }
+            action={{ label: 'Refresh', onPress: () => feed.refetch() }}
+          />
         ) : (
           queue
             .slice(0, 3)
@@ -244,7 +223,7 @@ function BrowseTasks() {
 
       {queue.length > 0 && (
         <View style={[tw`flex-row items-center justify-center gap-6 pt-4`, { paddingBottom: 110 }]}>
-          <Pressable
+          <PressableScale
             onPress={() => activeCardRef.current?.swipeLeft()}
             style={[
               tw`h-14 w-14 items-center justify-center rounded-full`,
@@ -254,16 +233,21 @@ function BrowseTasks() {
                 borderColor: systemColors.grey5,
               },
             ]}>
-            <X size={26} color={colors.dangerText} />
-          </Pressable>
-          <Pressable
+            <X size={26} color={colors.danger} />
+          </PressableScale>
+          <PressableScale
             onPress={() => activeCardRef.current?.swipeRight()}
+            disabled={makeOffer.isPending}
             style={[
               tw`h-16 w-16 items-center justify-center rounded-full`,
-              { backgroundColor: colors.brand },
+              { backgroundColor: colors.primary },
             ]}>
-            <Heart size={26} color="white" fill="white" />
-          </Pressable>
+            {makeOffer.isPending ? (
+              <Spinner size={24} color={colors.white} />
+            ) : (
+              <Heart size={26} color="white" fill="white" />
+            )}
+          </PressableScale>
         </View>
       )}
     </SafeAreaView>
@@ -295,12 +279,76 @@ function PostTaskWizard() {
   const [dateSheetVisible, setDateSheetVisible] = React.useState(false);
 
   const [activeSheet, setActiveSheet] = React.useState<ActiveSheet>(null);
+  // Set once the draft exists server-side, so a failed payment can be retried
+  // without creating a second task.
+  const [draftTaskId, setDraftTaskId] = React.useState<string | null>(null);
+
+  const createTask = useCreateTask();
+  const fundTask = useFundTask(draftTaskId ?? '');
+  const trackPostedTask = useTrackPostedTask();
+  const paymentMethods = usePaymentMethods();
 
   const budgetValue = Number(budget);
+  const budgetMinor = Math.round(budgetValue * locale.minorUnits);
+
+  // The platform fee is quoted by the server — the rule can change without an
+  // app release, so never compute it on the client.
+  const quote = useFeeQuote(budgetMinor);
   const showBudgetWarning = budget.length > 0 && budgetValue > 0 && budgetValue < 500;
   const canContinueStep1 = Boolean(title && category && description && budget);
   const canContinueStep2 = Boolean(from && to && dateTime);
-  const platformFee = (budgetValue * PLATFORM_FEE_PERCENT) / 100;
+
+  const handlePay = async () => {
+    if (!dateTime || !category) return;
+
+    const defaultMethod =
+      paymentMethods.data?.find((method) => method.is_default) ?? paymentMethods.data?.[0];
+
+    if (!defaultMethod) {
+      toast.warning('Add a payment method first', {
+        description: 'Your budget is held in escrow until the task is confirmed.',
+        action: { label: 'Add card', onPress: () => router.push('/payment-method') },
+      });
+      return;
+    }
+
+    try {
+      let taskId = draftTaskId;
+
+      if (!taskId) {
+        // Without coordinates the task never appears in a located Sidekick's
+        // feed — the geo query drops rows with a null `location_lat`. Both
+        // lookups are best-effort and run together rather than in sequence.
+        const [approxAt, exactAt] = await Promise.all([geocode(from), geocode(to)]);
+
+        const task = await createTask.mutateAsync({
+          title,
+          description,
+          category,
+          // `from` is the public area label shown in the feed; `to` is the full
+          // address, released only to the assigned Sidekick.
+          location_approx: from,
+          location_exact: to,
+          location_lat: approxAt?.lat,
+          location_lng: approxAt?.lng,
+          location_exact_lat: exactAt?.lat,
+          location_exact_lng: exactAt?.lng,
+          timing_type: 'specific_date',
+          scheduled_for: dateTime.toISOString(),
+          budget: budgetMinor,
+        });
+        taskId = task.id;
+        setDraftTaskId(taskId);
+        trackPostedTask(taskId);
+      }
+
+      // Funding escrow is what actually publishes the task.
+      await fundTask.mutateAsync(defaultMethod.id);
+      setActiveSheet('success');
+    } catch (error) {
+      toast.error('Couldn’t post your task', { description: errorMessage(error) });
+    }
+  };
 
   const handleAndroidDatePick = () => {
     DateTimePickerAndroid.open({
@@ -341,6 +389,7 @@ function PostTaskWizard() {
     setTo('');
     setDateTime(null);
     setActiveSheet(null);
+    setDraftTaskId(null);
   };
 
   const handleBackHome = () => {
@@ -384,18 +433,18 @@ function PostTaskWizard() {
         <View
           style={[
             tw`h-10 w-10 items-center justify-center rounded-full`,
-            { backgroundColor: colors.accentSand },
+            { backgroundColor: colors.orangeTint },
           ]}>
-          <Text fontWeight="bold" fontSize={15} classN={`text-[${colors.pendingText}]`}>
+          <Text variant="body" fontWeight="medium" classN={`text-[${colors.orangeDark}]`}>
             B
           </Text>
         </View>
         <View
           style={{
-            borderColor: colors.brand,
+            borderColor: colors.primary,
             ...tw`h-9 w-9 items-center justify-center rounded-full border`,
           }}>
-          <Text fontWeight="bold" fontSize={13} classN={`text-[${colors.brand}]`}>
+          <Text variant="caption" fontWeight="medium" classN={`text-[${colors.primary}]`}>
             H
           </Text>
         </View>
@@ -407,21 +456,21 @@ function PostTaskWizard() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
         {step === 2 && (
-          <Pressable
+          <PressableScale
             onPress={() => setStep(1)}
             hitSlop={8}
-            style={tw`-ml-2 mt-3 h-9 w-9 items-center justify-center`}>
-            <ChevronLeft size={24} color={colors.textPrimary} />
-          </Pressable>
+            style={tw`-ml-2 mt-2 h-9 w-9 items-center justify-center`}>
+            <ChevronLeft size={24} color={colors.gray900} />
+          </PressableScale>
         )}
 
         <Text
-          fontWeight="bold"
-          fontSize={22}
-          classN={step === 2 ? 'mt-1 text-black' : 'mt-4 text-black'}>
+          variant="title"
+
+          classN={step === 2 ? 'mt-1 text-black' : 'mt-3 text-black'}>
           What do you need?
         </Text>
-        <Text fontSize={13} classN={`mt-1 text-[${colors.textMuted}]`}>
+        <Text variant="caption" classN={`mt-1 text-[${colors.gray500}]`}>
           Post your task for Sidekick to see
         </Text>
 
@@ -433,27 +482,27 @@ function PostTaskWizard() {
                 value={title}
                 onChangeText={setTitle}
                 placeholder="e.g. Deep clean 2-bedroom apartment"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={colors.gray500}
                 style={[
                   tw`mt-2 rounded-full px-4 text-black`,
-                  { height: 52, borderWidth: 1, borderColor: colors.border },
+                  { height: 52, borderWidth: 1, borderColor: colors.gray300 },
                 ]}
               />
             </View>
 
             <View style={tw`mt-5`}>
               <FieldLabel>Category</FieldLabel>
-              <Pressable
+              <PressableScale
                 onPress={() => setCategorySheetVisible(true)}
                 style={[
                   tw`mt-2 flex-row items-center justify-between rounded-full px-4`,
-                  { height: 52, borderWidth: 1, borderColor: colors.border },
+                  { height: 52, borderWidth: 1, borderColor: colors.gray300 },
                 ]}>
-                <Text fontSize={14} classN={category ? 'text-black' : `text-[${colors.textMuted}]`}>
+                <Text variant="body" classN={category ? 'text-black' : `text-[${colors.gray500}]`}>
                   {category ?? 'Select category'}
                 </Text>
-                <ChevronDown size={18} color={colors.textMuted} />
-              </Pressable>
+                <ChevronDown size={18} color={colors.gray500} />
+              </PressableScale>
             </View>
 
             <View style={tw`mt-5`}>
@@ -462,14 +511,14 @@ function PostTaskWizard() {
                 value={description}
                 onChangeText={setDescription}
                 placeholder={'Describe what needs to be done, any requirements\nand when...'}
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={colors.gray500}
                 multiline
                 style={[
                   tw`mt-2 rounded-2xl p-4 text-black`,
                   {
                     minHeight: 100,
                     borderWidth: 1,
-                    borderColor: colors.border,
+                    borderColor: colors.gray300,
                     textAlignVertical: 'top',
                   },
                 ]}
@@ -484,66 +533,66 @@ function PostTaskWizard() {
 
                   if (uri) {
                     return (
-                      <Pressable
+                      <PressableScale
                         key={uri}
                         onLongPress={() => removePhoto(uri)}
                         style={tw`h-24 flex-1 overflow-hidden rounded-2xl`}>
                         <Image source={{ uri }} style={tw`h-full w-full`} />
-                      </Pressable>
+                      </PressableScale>
                     );
                   }
 
                   const isNextSlot = index === photos.length;
                   return (
-                    <Pressable
+                    <PressableScale
                       key={index}
                       onPress={isNextSlot ? handleAddPhoto : undefined}
                       style={[
                         tw`h-24 flex-1 items-center justify-center rounded-2xl`,
-                        { borderWidth: 1, borderColor: colors.border },
+                        { borderWidth: 1, borderColor: colors.gray300 },
                       ]}>
                       {isNextSlot ? (
-                        <Upload size={20} color={colors.textPrimary} />
+                        <Upload size={20} color={colors.gray900} />
                       ) : (
-                        <ImageIcon size={20} color={colors.iconPlaceholder} />
+                        <ImageIcon size={20} color={colors.gray300} />
                       )}
-                    </Pressable>
+                    </PressableScale>
                   );
                 })}
               </View>
             </View>
 
             <View style={tw`mt-5`}>
-              <FieldLabel>Your Budget (₦)</FieldLabel>
+              <FieldLabel>{`Your Budget (${locale.currency})`}</FieldLabel>
               <TextInput
                 value={budget}
                 onChangeText={(text) => setBudget(text.replace(/[^0-9]/g, ''))}
                 placeholder="0"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={colors.gray500}
                 keyboardType="number-pad"
                 style={[
                   tw`mt-2 rounded-full px-4 text-black`,
-                  { height: 52, borderWidth: 1, borderColor: colors.border },
+                  { height: 52, borderWidth: 1, borderColor: colors.gray300 },
                 ]}
               />
               {showBudgetWarning && (
-                <Text fontSize={12} classN={`mt-1.5 text-[${colors.warning}]`}>
-                  Budget under ₦500 rarely attract sidekick interest
+                <Text variant="caption" classN={`mt-1.5 text-[${colors.orangeMuted}]`}>
+                  {`Budgets under ${locale.currency}500 rarely attract Sidekick interest`}
                 </Text>
               )}
             </View>
 
-            <Pressable
+            <PressableScale
               disabled={!canContinueStep1}
               onPress={() => setStep(2)}
               style={[
                 tw`mt-6 items-center justify-center rounded-full py-4`,
-                { backgroundColor: colors.brand, opacity: canContinueStep1 ? 1 : 0.5 },
+                { backgroundColor: colors.primary, opacity: canContinueStep1 ? 1 : 0.5 },
               ]}>
-              <Text fontWeight="bold" fontSize={15} classN="text-white">
+              <Text variant="body" fontWeight="medium" classN="text-white">
                 Continue
               </Text>
-            </Pressable>
+            </PressableScale>
           </>
         )}
 
@@ -555,72 +604,72 @@ function PostTaskWizard() {
                 value={from}
                 onChangeText={setFrom}
                 placeholder="From"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={colors.gray500}
                 style={[
                   tw`mt-2 rounded-full px-4 text-black`,
-                  { height: 52, borderWidth: 1, borderColor: colors.border },
+                  { height: 52, borderWidth: 1, borderColor: colors.gray300 },
                 ]}
               />
               <TextInput
                 value={to}
                 onChangeText={setTo}
                 placeholder="To"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={colors.gray500}
                 style={[
-                  tw`mt-3 rounded-full px-4 text-black`,
-                  { height: 52, borderWidth: 1, borderColor: colors.border },
+                  tw`mt-2 rounded-full px-4 text-black`,
+                  { height: 52, borderWidth: 1, borderColor: colors.gray300 },
                 ]}
               />
               <View
                 style={[
-                  tw`mt-3 items-center justify-center rounded-2xl`,
-                  { height: 160, borderWidth: 1, borderColor: colors.border },
+                  tw`mt-2 items-center justify-center rounded-2xl`,
+                  { height: 160, borderWidth: 1, borderColor: colors.gray300 },
                 ]}>
-                <ImageOff size={26} color={colors.iconPlaceholder} />
+                <ImageOff size={26} color={colors.gray300} />
               </View>
             </View>
 
             <View style={tw`mt-5`}>
               <FieldLabel>Set Time & Date</FieldLabel>
-              <Pressable
+              <PressableScale
                 onPress={openDateTimePicker}
                 style={[
                   tw`mt-2 flex-row items-center justify-between rounded-full px-4`,
-                  { height: 52, borderWidth: 1, borderColor: colors.border },
+                  { height: 52, borderWidth: 1, borderColor: colors.gray300 },
                 ]}>
-                <Text fontSize={14} classN={dateTime ? 'text-black' : `text-[${colors.textMuted}]`}>
+                <Text variant="body" classN={dateTime ? 'text-black' : `text-[${colors.gray500}]`}>
                   {dateTime
                     ? `${formatDateLabel(dateTime)} • ${formatTimeLabel(dateTime)}`
                     : 'Select date and time'}
                 </Text>
-                <Calendar size={18} color={colors.textMuted} />
-              </Pressable>
+                <Calendar size={18} color={colors.gray500} />
+              </PressableScale>
             </View>
 
-            <Pressable
+            <PressableScale
               disabled={!canContinueStep2}
               onPress={() => setActiveSheet('summary')}
               style={[
                 tw`mt-6 items-center justify-center rounded-full py-4`,
-                { backgroundColor: colors.brand, opacity: canContinueStep2 ? 1 : 0.5 },
+                { backgroundColor: colors.primary, opacity: canContinueStep2 ? 1 : 0.5 },
               ]}>
-              <Text fontWeight="bold" fontSize={15} classN="text-white">
+              <Text variant="body" fontWeight="medium" classN="text-white">
                 Continue
               </Text>
-            </Pressable>
+            </PressableScale>
           </>
         )}
       </ScrollView>
 
       <BottomSheet visible={categorySheetVisible} onClose={() => setCategorySheetVisible(false)}>
-        <Text fontWeight="black" fontSize={18} classN="text-black">
+        <Text variant="subhead" fontWeight="black" classN="text-black">
           Select category
         </Text>
-        <View style={tw`mt-3`}>
+        <View style={tw`mt-2`}>
           {CATEGORIES.map((item) => {
             const isSelected = item === category;
             return (
-              <Pressable
+              <PressableScale
                 key={item}
                 onPress={() => {
                   setCategory(item);
@@ -628,13 +677,16 @@ function PostTaskWizard() {
                 }}
                 style={[
                   tw`flex-row items-center justify-between rounded-2xl px-4 py-3.5`,
-                  isSelected && { backgroundColor: colors.surface },
+                  isSelected && { backgroundColor: colors.gray50 },
                 ]}>
-                <Text fontWeight={isSelected ? 'bold' : 'normal'} fontSize={14} classN="text-black">
+                <Text
+                  variant="body"
+                  fontWeight={isSelected ? 'bold' : 'normal'}
+                  classN="text-black">
                   {item}
                 </Text>
-                {isSelected && <Check size={18} color={colors.brand} />}
-              </Pressable>
+                {isSelected && <Check size={18} color={colors.primary} />}
+              </PressableScale>
             );
           })}
         </View>
@@ -642,7 +694,7 @@ function PostTaskWizard() {
 
       {Platform.OS === 'ios' && (
         <BottomSheet visible={dateSheetVisible} onClose={() => setDateSheetVisible(false)}>
-          <Text fontWeight="black" fontSize={18} classN="text-black">
+          <Text variant="subhead" fontWeight="black" classN="text-black">
             Set time & date
           </Text>
           <DateTimePicker
@@ -653,20 +705,20 @@ function PostTaskWizard() {
             onChange={(_, selectedDate) => selectedDate && setPendingDate(selectedDate)}
             style={tw`mt-2`}
           />
-          <View style={tw`mt-3`}>
-            <Pressable
+          <View style={tw`mt-2`}>
+            <PressableScale
               onPress={() => {
                 setDateTime(pendingDate);
                 setDateSheetVisible(false);
               }}
               style={[
                 tw`items-center justify-center rounded-full py-4`,
-                { backgroundColor: colors.brand },
+                { backgroundColor: colors.primary },
               ]}>
-              <Text fontWeight="bold" fontSize={15} classN="text-white">
+              <Text variant="body" fontWeight="medium" classN="text-white">
                 Set date & time
               </Text>
-            </Pressable>
+            </PressableScale>
           </View>
         </BottomSheet>
       )}
@@ -679,7 +731,7 @@ function PostTaskWizard() {
             onContinue={() => setActiveSheet('escrow')}
             category={category ?? ''}
             location={to}
-            price={`₦${budgetValue.toLocaleString('en-US')}`}
+            price={money(budgetMinor)}
             date={formatDateLabel(dateTime)}
             time={formatTimeLabel(dateTime)}
           />
@@ -687,9 +739,10 @@ function PostTaskWizard() {
           <EscrowPaymentSheet
             visible={activeSheet === 'escrow'}
             onClose={() => setActiveSheet('summary')}
-            onPay={() => setActiveSheet('success')}
-            budget={budgetValue}
-            platformFee={platformFee}
+            onPay={handlePay}
+            budget={budgetMinor}
+            platformFee={quote.data?.fee ?? 0}
+            paying={createTask.isPending || fundTask.isPending}
           />
         </>
       )}

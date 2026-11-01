@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { ChevronLeft, Copy, Gift, Users } from 'lucide-react-native';
 import * as React from 'react';
-import { Pressable, ScrollView, Share, View } from 'react-native';
+import { ScrollView, Share, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Text from '@/components/UI/Text';
@@ -10,6 +10,7 @@ import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
 import { withOpacity } from '@/theme/with-opacity';
 import { colors } from '@/theme/palette';
+import { PressableScale } from '@/components/UI/PressableScale';
 
 const REFERRAL_CODE = 'BISOLA200';
 
@@ -40,10 +41,10 @@ export default function ReferAFriend() {
       style={[tw`flex-1`, { backgroundColor: systemColors.background }]}
       edges={['top', 'bottom']}>
       <View style={tw`flex-row items-center gap-3 px-4 pb-3 pt-2`}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
+        <PressableScale onPress={() => router.back()} hitSlop={8}>
           <ChevronLeft size={24} color={systemColors.foreground} />
-        </Pressable>
-        <Text fontWeight="bold" fontSize={16} classN={`text-[${fg}]`}>
+        </PressableScale>
+        <Text variant="subhead" fontWeight="bold" classN={`text-[${fg}]`}>
           Refer a Friend
         </Text>
       </View>
@@ -52,18 +53,18 @@ export default function ReferAFriend() {
         style={tw`flex-1 px-4`}
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}>
-        <View style={tw`mt-4 items-center`}>
+        <View style={tw`mt-3 items-center`}>
           <View
             style={[
               tw`h-16 w-16 items-center justify-center rounded-full`,
-              { backgroundColor: withOpacity(colors.brand, 0.12) },
+              { backgroundColor: withOpacity(colors.primary, 0.12) },
             ]}>
-            <Gift size={28} color={colors.brand} />
+            <Gift size={28} color={colors.primary} />
           </View>
-          <Text fontWeight="black" fontSize={20} classN={`mt-4 text-center text-[${fg}]`}>
+          <Text variant="title" fontWeight="black" classN={`mt-3 text-center text-[${fg}]`}>
             Invite friends, earn rewards
           </Text>
-          <Text fontSize={13} classN={`mt-1.5 text-center text-[${muted}]`}>
+          <Text variant="caption" classN={`mt-1.5 text-center text-[${muted}]`}>
             Share your code — you both get rewarded when they complete their first task.
           </Text>
         </View>
@@ -74,36 +75,43 @@ export default function ReferAFriend() {
             { backgroundColor: systemColors.card, borderWidth: 1, borderColor: systemColors.grey5 },
           ]}>
           <View>
-            <Text fontSize={11} classN={`text-[${muted}]`}>
+            <Text variant="micro" fontWeight="normal" classN={`text-[${muted}]`}>
               Your referral code
             </Text>
-            <Text fontWeight="black" fontSize={20} classN={`mt-1 text-[${twColor(colors.brand)}]`}>
+            <Text
+              variant="title"
+              fontWeight="black"
+
+              classN={`mt-1 text-[${twColor(colors.primary)}]`}>
               {REFERRAL_CODE}
             </Text>
           </View>
-          <Pressable
+          <PressableScale
             onPress={handleCopy}
             style={[
               tw`flex-row items-center gap-1.5 rounded-full px-3.5 py-2`,
-              { backgroundColor: withOpacity(colors.brand, 0.12) },
+              { backgroundColor: withOpacity(colors.primary, 0.12) },
             ]}>
-            <Copy size={14} color={colors.brand} />
-            <Text fontWeight="medium" fontSize={12} classN={`text-[${twColor(colors.brand)}]`}>
+            <Copy size={14} color={colors.primary} />
+            <Text
+              variant="caption"
+              fontWeight="medium"
+              classN={`text-[${twColor(colors.primary)}]`}>
               {copied ? 'Copied!' : 'Copy'}
             </Text>
-          </Pressable>
+          </PressableScale>
         </View>
 
-        <Pressable
+        <PressableScale
           onPress={handleShare}
           style={[
-            tw`mt-3 items-center justify-center rounded-full py-4`,
-            { backgroundColor: colors.brand },
+            tw`mt-2 items-center justify-center rounded-full py-4`,
+            { backgroundColor: colors.primary },
           ]}>
-          <Text fontWeight="bold" fontSize={15} classN="text-white">
+          <Text variant="body" fontWeight="medium" classN="text-white">
             Share invite link
           </Text>
-        </Pressable>
+        </PressableScale>
 
         <View
           style={[
@@ -114,21 +122,21 @@ export default function ReferAFriend() {
           <View
             style={[
               tw`h-10 w-10 items-center justify-center rounded-full`,
-              { backgroundColor: withOpacity(colors.brand, 0.12) },
+              { backgroundColor: withOpacity(colors.primary, 0.12) },
             ]}>
-            <Users size={17} color={colors.brand} />
+            <Users size={17} color={colors.primary} />
           </View>
           <View style={tw`flex-1`}>
-            <Text fontWeight="bold" fontSize={13} classN={`text-[${fg}]`}>
+            <Text variant="caption" fontWeight="medium" classN={`text-[${fg}]`}>
               3 friends joined
             </Text>
-            <Text fontSize={11} classN={`mt-0.5 text-[${muted}]`}>
+            <Text variant="micro" fontWeight="normal" classN={`mt-0.5 text-[${muted}]`}>
               ₦3,000 earned so far
             </Text>
           </View>
         </View>
 
-        <Text fontWeight="bold" fontSize={13} classN={`mt-6 text-[${fg}]`}>
+        <Text variant="caption" fontWeight="medium" classN={`mt-6 text-[${fg}]`}>
           How it works
         </Text>
         <View style={tw`mt-2.5 gap-2.5`}>
@@ -143,10 +151,10 @@ export default function ReferAFriend() {
                   borderColor: systemColors.grey5,
                 },
               ]}>
-              <Text fontWeight="bold" fontSize={13} classN={`text-[${fg}]`}>
+              <Text variant="caption" fontWeight="medium" classN={`text-[${fg}]`}>
                 {reward.title}
               </Text>
-              <Text fontSize={12} classN={`mt-0.5 text-[${muted}]`}>
+              <Text variant="caption" classN={`mt-0.5 text-[${muted}]`}>
                 {reward.description}
               </Text>
             </View>

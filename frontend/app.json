@@ -28,7 +28,15 @@
           "photosPermission": "Allow Sidekick to access your photos to attach reference images to a task.",
           "cameraPermission": "Allow Sidekick to use your camera to attach reference photos to a task."
         }
-      ]
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Sidekick to use your location to show tasks near you."
+        }
+      ],
+      "expo-secure-store",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -52,14 +60,15 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "3d6b3c79-557e-4eda-91b3-cbc8fac713c8"
+        "projectId": "add8bbeb-534b-44a5-87d9-c62defe27649"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/3d6b3c79-557e-4eda-91b3-cbc8fac713c8"
-    }
+      "url": "https://u.expo.dev/add8bbeb-534b-44a5-87d9-c62defe27649"
+    },
+    "owner": "sidekick-limited"
   }
 }

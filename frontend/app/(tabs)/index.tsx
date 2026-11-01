@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import {
   ChevronRight,
   ClipboardList,
@@ -8,83 +9,44 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import RoleSelectSheet from '@/components/UI/RoleSelectSheet';
 import Text from '@/components/UI/Text';
 import { ReviewOffersSheet } from '@/components/UI/TaskSheets';
 import {
-  ACCENT_TEAL,
   CARD_SHADOW,
   ProgressTracker,
   QUICK_CATEGORIES,
   StatusPill,
-  formatNaira,
   getCategoryMeta,
-  parseNaira,
   type Task,
 } from '@/components/UI/TaskParts';
 import { LiveDot } from '@/components/UI/TaskTimeline';
+import { EmptyState } from '@/components/UI/EmptyState';
+import { AwaitingOffers, OpenSlot } from '@/components/UI/illustrations';
+import { SkeletonTaskCard } from '@/components/UI/Skeleton';
+import { toDisplayTask } from '@/lib/api/adapters';
+import { useSetRole } from '@/lib/api/auth';
+import { money } from '@/lib/format';
+import { useMyPostedTasks } from '@/lib/api/myTasks';
+import { errorMessage } from '@/lib/axios';
 import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
-import { useOutstandingStepsCount, useRoleStore, type UserRole } from '@/store/roleStore';
+import {
+  intentFromRole,
+  useOutstandingStepsCount,
+  useRoleStore,
+  type UserRole,
+} from '@/store/roleStore';
+import { useAuthStore } from '@/store/authStore';
+import { toast } from '@/store/toastStore';
 import { useTaskStore } from '@/store/taskStore';
 import { withOpacity } from '@/theme/with-opacity';
 import { colors } from '@/theme/palette';
-
-export const POSTED_TASKS: Task[] = [
-  {
-    id: '1',
-    category: 'Cleaning',
-    status: 'in_progress',
-    statusLabel: 'In Progress',
-    title: 'Deep clean 2-bedroom apartment',
-    meta: 'Ade B. started 2h ago • Awaiting completion',
-    currentStep: 3,
-    payIn: 'Pay in 3hours',
-    price: '₦50,000',
-    sidekickName: 'Ade B.',
-    description: 'Deep clean of a 2-bedroom apartment, including kitchen and bathrooms.',
-    etaWindow: '3 - 4 hrs',
-  },
-  {
-    id: '2',
-    category: 'Delivery',
-    status: 'offers',
-    statusLabel: '3 Offers',
-    title: 'Pick up groceries from shoprite',
-    meta: 'Posted 12mins ago. Lekki Phase 1',
-    offersText: '3 Sidekicks made offers. Tap to view',
-    offerCount: 4,
-  },
-  {
-    id: '3',
-    category: 'Tech Help',
-    status: 'scheduled',
-    statusLabel: 'Scheduled',
-    title: 'Laptop battery repair',
-    meta: 'Saturday . 12:00pm',
-    currentStep: 1,
-    payIn: 'Pay in 3days',
-    price: '₦50,000',
-    sidekickName: 'Chidi O.',
-    description: 'Replace a worn-out laptop battery and check charging port.',
-    etaWindow: 'Same day, within 3 hrs',
-  },
-  {
-    id: '4',
-    category: 'Tech Help',
-    status: 'dispute',
-    statusLabel: 'Dispute',
-    title: 'Laptop battery repair',
-    meta: 'Saturday . 12:00pm',
-    disputeText: 'Admin reviewing your dispute. Escrow frozen. Resolution in 24–48h.',
-    sidekickName: 'Chidi O.',
-    description: 'Replace a worn-out laptop battery and check charging port.',
-    etaWindow: 'Same day, within 3 hrs',
-  },
-];
+import { PressableScale } from '@/components/UI/PressableScale';
+import { StaggerItem } from '@/components/UI/Stagger';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -108,11 +70,11 @@ function TaskCard({
   const { color: categoryColor, icon: CategoryIcon } = getCategoryMeta(task.category);
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       disabled={!onPress}
       style={[
-        tw`mt-4 flex-row overflow-hidden rounded-2xl`,
+        tw`mt-3 flex-row overflow-hidden rounded-2xl`,
         { backgroundColor: systemColors.card },
         CARD_SHADOW,
       ]}>
@@ -121,7 +83,7 @@ function TaskCard({
         <View style={tw`flex-row items-center justify-between`}>
           <View style={tw`flex-row items-center gap-1.5`}>
             <CategoryIcon size={13} color={categoryColor} />
-            <Text fontWeight="bold" fontSize={11} classN={`text-[${categoryColor}]`}>
+            <Text variant="micro" classN={`text-[${categoryColor}]`}>
               {task.category.toUpperCase()}
             </Text>
           </View>
@@ -131,24 +93,24 @@ function TaskCard({
           </View>
         </View>
 
-        <Text fontWeight="bold" fontSize={16} classN={`mt-1 text-[${fg}]`}>
+        <Text variant="subhead" fontWeight="bold" classN={`mt-1 text-[${fg}]`}>
           {task.title}
         </Text>
-        <Text fontSize={12} classN={`mt-0.5 text-[${muted}]`}>
+        <Text variant="caption" classN={`mt-0.5 text-[${muted}]`}>
           {task.meta}
         </Text>
 
         {task.offersText && (
-          <View style={[tw`mt-3 rounded-xl px-3 py-2`, { backgroundColor: colors.successBg }]}>
-            <Text fontSize={12} classN={`text-[${colors.success}]`}>
+          <View style={[tw`mt-2 rounded-xl px-3 py-2`, { backgroundColor: colors.greenTint }]}>
+            <Text variant="caption" classN={`text-[${colors.green}]`}>
               {task.offersText}
             </Text>
           </View>
         )}
 
         {task.disputeText && (
-          <View style={[tw`mt-3 rounded-xl px-3 py-2`, { backgroundColor: colors.disputeBg }]}>
-            <Text fontSize={12} classN={`text-[${colors.dangerText}]`}>
+          <View style={[tw`mt-2 rounded-xl px-3 py-2`, { backgroundColor: colors.dangerTint }]}>
+            <Text variant="caption" classN={`text-[${colors.danger}]`}>
               {task.disputeText}
             </Text>
           </View>
@@ -159,19 +121,19 @@ function TaskCard({
         {task.price && (
           <View
             style={[
-              tw`mt-3 flex-row items-center justify-between pt-3`,
+              tw`mt-2 flex-row items-center justify-between pt-3`,
               { borderTopWidth: 1, borderTopColor: systemColors.grey5 },
             ]}>
-            <Text fontSize={12} classN={`text-[${colors.warning}]`}>
+            <Text variant="caption" classN={`text-[${colors.orangeMuted}]`}>
               {task.payIn}
             </Text>
-            <Text fontWeight="bold" fontSize={15} classN={`text-[${fg}]`}>
+            <Text variant="body" fontWeight="medium" classN={`text-[${fg}]`}>
               {task.price}
             </Text>
           </View>
         )}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -194,14 +156,14 @@ function StatTile({
       <View
         style={[
           tw`h-8 w-8 items-center justify-center rounded-full`,
-          { backgroundColor: withOpacity(ACCENT_TEAL, 0.12) },
+          { backgroundColor: withOpacity(colors.primary, 0.12) },
         ]}>
-        <Icon size={16} color={ACCENT_TEAL} />
+        <Icon size={16} color={colors.primary} />
       </View>
-      <Text fontWeight="black" fontSize={17} classN={`mt-2 text-[${fg}]`}>
+      <Text variant="subhead" fontWeight="black" classN={`mt-2 text-[${fg}]`}>
         {value}
       </Text>
-      <Text fontSize={11} classN={`text-[${muted}]`}>
+      <Text variant="micro" fontWeight="normal" classN={`text-[${muted}]`}>
         {label}
       </Text>
     </View>
@@ -210,29 +172,29 @@ function StatTile({
 
 function PostTaskBanner() {
   return (
-    <Pressable
+    <PressableScale
       onPress={() => router.push('/(tabs)/post')}
       style={[
-        tw`mt-4 flex-row items-center gap-3 rounded-3xl p-4`,
-        { backgroundColor: ACCENT_TEAL },
+        tw`mt-3 flex-row items-center gap-3 rounded-3xl p-4`,
+        { backgroundColor: colors.primary },
       ]}>
       <View
         style={[
           tw`h-11 w-11 items-center justify-center rounded-2xl`,
-          { backgroundColor: withOpacity(colors.surfaceWhite, 0.18) },
+          { backgroundColor: withOpacity(colors.white, 0.18) },
         ]}>
         <Plus size={22} color="white" />
       </View>
       <View style={tw`flex-1`}>
-        <Text fontWeight="bold" fontSize={15} classN="text-white">
+        <Text variant="body" fontWeight="medium" classN="text-white">
           Post a task
         </Text>
-        <Text fontSize={12} classN="mt-0.5 text-white opacity-80">
+        <Text variant="caption" classN="mt-0.5 text-white opacity-80">
           Tell us what you need done and get offers in minutes
         </Text>
       </View>
       <ChevronRight size={18} color="white" />
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -242,15 +204,15 @@ function QuickCategories() {
 
   return (
     <View style={tw`mt-5`}>
-      <Text fontWeight="bold" fontSize={13} classN={`text-[${fg}]`}>
+      <Text variant="caption" fontWeight="medium" classN={`text-[${fg}]`}>
         Need something else?
       </Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={tw`mt-3 gap-3 pr-4`}>
+        contentContainerStyle={tw`mt-2 gap-3 pr-4`}>
         {QUICK_CATEGORIES.map(({ name, label, color, icon: Icon }) => (
-          <Pressable
+          <PressableScale
             key={name}
             onPress={() => router.push({ pathname: '/(tabs)/post', params: { category: name } })}
             style={tw`w-16 items-center gap-1.5`}>
@@ -264,7 +226,7 @@ function QuickCategories() {
             <Text fontSize={10.5} classN={`text-center text-[${fg}]`} numberOfLines={1}>
               {label}
             </Text>
-          </Pressable>
+          </PressableScale>
         ))}
       </ScrollView>
     </View>
@@ -280,12 +242,31 @@ export default function Dashboard() {
   const isSidekick = role === 'sidekick';
   const fg = twColor(systemColors.foreground);
   const muted = twColor(systemColors.mutedForeground);
-  const tasks = isSidekick ? (sidekickCurrentTask ? [sidekickCurrentTask] : []) : POSTED_TASKS;
-  const firstName = 'Bisola';
+  // Text and hairlines sitting on the navy hero.
+  const onNavyMuted = twColor(withOpacity(colors.white, 0.72));
+  const onNavyBorder = withOpacity(colors.white, 0.45);
+  const posted = useMyPostedTasks();
+  const user = useAuthStore((state) => state.user);
 
-  const totalInEscrow = POSTED_TASKS.reduce((sum, task) => sum + parseNaira(task.price), 0);
+  console.log(user, 'current user');
 
-  const offersTask = POSTED_TASKS.find((task) => task.status === 'offers');
+  // The Hero list is live; the Sidekick's single active task still comes from
+  // the local task store until an "accepted offer" endpoint exists to read it
+  // back from the server.
+  const postedTasks = React.useMemo(() => posted.tasks.map(toDisplayTask), [posted.tasks]);
+  const tasks = isSidekick ? (sidekickCurrentTask ? [sidekickCurrentTask] : []) : postedTasks;
+
+  // Only money actually held in escrow counts — a draft or an open task hasn't
+  // been charged yet.
+  const totalInEscrow = React.useMemo(
+    () =>
+      posted.tasks
+        .filter((task) => task.escrow_status === 'secured')
+        .reduce((sum, task) => sum + (task.total_charge ?? task.budget ?? 0), 0),
+    [posted.tasks]
+  );
+
+  const offersTask = postedTasks.find((task) => task.status === 'offers');
 
   const handleTaskPress = (task: Task) => {
     if (task.status === 'offers') {
@@ -295,162 +276,187 @@ export default function Dashboard() {
     router.push(`/task/${task.id}`);
   };
 
-  const handleRoleSelect = (selectedRole: UserRole) => {
-    setRole(selectedRole);
-    router.push('/get-started');
+  const setRoleIntent = useSetRole();
+
+  const handleRoleSelect = async (selectedRole: UserRole) => {
+    // The server owns `role_intent`, so it decides first. Flipping locally and
+    // letting the request fail quietly would leave the app showing a role the
+    // account doesn't have — and the sheet wouldn't come back to say so.
+    try {
+      await setRoleIntent.mutateAsync(intentFromRole(selectedRole));
+      setRole(selectedRole);
+      router.push('/get-started');
+    } catch (error) {
+      toast.error('Couldn’t save your role', { description: errorMessage(error) });
+    }
   };
 
   return (
-    <SafeAreaView style={[tw`flex-1`, { backgroundColor: systemColors.background }]}>
-      <View style={tw`flex-row items-center justify-between px-4 pt-2`}>
-        <Pressable style={tw`flex-row items-center gap-2`}>
-          <View
-            style={[
-              tw`h-10 w-10 items-center justify-center rounded-full`,
-              { backgroundColor: colors.accentSand },
-            ]}>
-            <Text fontWeight="bold" fontSize={15} classN={`text-[${colors.pendingText}]`}>
-              B
-            </Text>
-          </View>
-          <View>
-            <View style={tw`flex-row items-center`}>
-              <Text fontWeight="bold" fontSize={15} classN={`text-[${fg}]`}>
-                Bisola Soks
-              </Text>
-              <ChevronRight size={16} color={systemColors.mutedForeground} />
-            </View>
-            <Text fontSize={12} classN={`text-[${muted}]`}>
-              Lagos Island
-            </Text>
-          </View>
-        </Pressable>
-
-        <View
-          style={{
-            borderColor: ACCENT_TEAL,
-            ...tw`h-9 w-9 items-center justify-center rounded-full border`,
-          }}>
-          <Text fontWeight="bold" fontSize={13} classN={`text-[${ACCENT_TEAL}]`}>
-            {isSidekick ? 'S' : 'H'}
-          </Text>
-        </View>
-      </View>
-
-      <ScrollView
-        style={tw`flex-1 px-4`}
-        contentContainerStyle={{ paddingBottom: 110 }}
-        showsVerticalScrollIndicator={false}>
-        <Text fontWeight="black" fontSize={22} classN={`mt-5 text-[${fg}]`}>
-          {getGreeting()}, {firstName} 👋
-        </Text>
-        <Text fontSize={13} classN={`mt-1 text-[${muted}]`}>
-          {isSidekick ? 'Ready to find your next task?' : 'Ready to get something done today?'}
-        </Text>
-
-        {!isSidekick && (
-          <>
-            <PostTaskBanner />
-
-            <View style={tw`mt-4 flex-row gap-3`}>
-              <StatTile
-                icon={ClipboardList}
-                label="Active Tasks"
-                value={String(POSTED_TASKS.length)}
-              />
-              <StatTile icon={ShieldCheck} label="In Escrow" value={formatNaira(totalInEscrow)} />
-            </View>
-
-            <QuickCategories />
-          </>
-        )}
-
-        {hasChosenRole && outstandingSteps > 0 && (
-          <Pressable
-            onPress={() => router.push('/get-started')}
-            style={[
-              tw`mt-5 flex-row items-center gap-3 rounded-2xl p-3.5`,
-              { backgroundColor: colors.pendingBg },
-            ]}>
-            <TriangleAlert size={18} color={colors.pendingText} />
-            <Text fontWeight="medium" fontSize={13} classN={`flex-1 text-[${colors.pendingText}]`}>
-              {outstandingSteps} step{outstandingSteps > 1 ? 's' : ''} left to finish setting up
-              your {isSidekick ? 'Sidekick' : 'Hero'} account
-            </Text>
-            <ChevronRight size={16} color={colors.pendingText} />
-          </Pressable>
-        )}
-
-        <View style={tw`mt-6 flex-row items-center justify-between`}>
-          <Text fontWeight="bold" fontSize={16} classN={`text-[${fg}]`}>
-            {isSidekick ? 'My Current Task' : 'My Posted Tasks'}
-          </Text>
-          {!isSidekick && tasks.length > 0 && (
-            <Text fontSize={12} classN={`text-[${muted}]`}>
-              {tasks.length} task{tasks.length > 1 ? 's' : ''}
-            </Text>
-          )}
-        </View>
-
-        {isSidekick && tasks.length > 0 && (
-          <Text fontSize={12} classN={`mt-0.5 text-[${muted}]`}>
-            Finish this task before you can accept another
-          </Text>
-        )}
-
-        {tasks.length === 0 ? (
-          <View style={tw`mt-10 items-center rounded-2xl p-8`}>
+    <SafeAreaView style={[tw`flex-1`, { backgroundColor: colors.primary }]}>
+      <StatusBar style="light" />
+      {/* Navy hero — puts the brand above the fold and gives the screen an anchor. */}
+      <View style={tw`px-4 pb-7 pt-2`}>
+        <View style={tw`flex-row items-center justify-between`}>
+          <PressableScale style={tw`flex-row items-center gap-2`} haptic="selection">
             <View
               style={[
-                tw`h-14 w-14 items-center justify-center rounded-full`,
-                { backgroundColor: withOpacity(ACCENT_TEAL, 0.12) },
+                tw`h-10 w-10 items-center justify-center rounded-full`,
+                { backgroundColor: colors.orangeTint },
               ]}>
-              <ClipboardList size={24} color={ACCENT_TEAL} />
+              <Text variant="body" fontWeight="bold" classN={`text-[${colors.orangeDark}]`}>
+                B
+              </Text>
             </View>
-            <Text fontWeight="medium" fontSize={14} classN={`mt-3 text-[${fg}]`}>
-              {isSidekick ? 'No active tasks yet' : 'No tasks yet'}
-            </Text>
-            <Text fontSize={12} classN={`mt-1 text-center text-[${muted}]`}>
-              {isSidekick
-                ? 'Browse the Post tab to find tasks nearby'
-                : 'Post your first task and get offers from nearby Sidekicks'}
-            </Text>
-            {!isSidekick && (
-              <Pressable
-                onPress={() => router.push('/(tabs)/post')}
-                style={[
-                  tw`mt-4 flex-row items-center gap-2 rounded-full px-5 py-3`,
-                  { backgroundColor: ACCENT_TEAL },
-                ]}>
-                <Plus size={16} color="white" />
-                <Text fontWeight="bold" fontSize={13} classN="text-white">
-                  Post a task
+            <View>
+              <View style={tw`flex-row items-center`}>
+                <Text variant="body" fontWeight="medium" classN="text-white">
+                  {user?.display_name || 'Current User'}
                 </Text>
-              </Pressable>
+                <ChevronRight size={16} color={onNavyMuted} />
+              </View>
+              <Text variant="caption" classN={`text-[${onNavyMuted}]`}>
+                Lagos Island
+              </Text>
+            </View>
+          </PressableScale>
+
+          <View
+            style={{
+              borderColor: onNavyBorder,
+              ...tw`h-9 w-9 items-center justify-center rounded-full border`,
+            }}>
+            <Text variant="caption" fontWeight="medium" classN="text-white">
+              {isSidekick ? 'S' : 'H'}
+            </Text>
+          </View>
+        </View>
+
+        <Text variant="headline" classN="mt-6 text-white">
+          {getGreeting()} 👋
+        </Text>
+        <Text variant="body" classN={`mt-1.5 text-[${onNavyMuted}]`}>
+          {isSidekick ? 'Ready to find your next task?' : 'Ready to get something done today?'}
+        </Text>
+      </View>
+
+      {/* Light sheet lifts off the hero. */}
+      <View
+        style={[
+          tw`flex-1 overflow-hidden rounded-t-3xl`,
+          { backgroundColor: systemColors.background },
+        ]}>
+        <ScrollView
+          style={tw`flex-1 px-4`}
+          contentContainerStyle={{ paddingBottom: 110, paddingTop: 22 }}
+          showsVerticalScrollIndicator={false}>
+          {!isSidekick && (
+            <>
+              <PostTaskBanner />
+
+              <View style={tw`mt-3 flex-row gap-3`}>
+                <StatTile
+                  icon={ClipboardList}
+                  label="Active Tasks"
+                  value={String(postedTasks.length)}
+                />
+                <StatTile icon={ShieldCheck} label="In Escrow" value={money(totalInEscrow)} />
+              </View>
+
+              <QuickCategories />
+            </>
+          )}
+
+          {hasChosenRole && outstandingSteps > 0 && (
+            <PressableScale
+              onPress={() => router.push('/get-started')}
+              style={[
+                tw`mt-5 flex-row items-center gap-3 rounded-2xl p-3.5`,
+                { backgroundColor: colors.orangeTint },
+              ]}>
+              <TriangleAlert size={18} color={colors.orangeDark} />
+              <Text
+                variant="caption"
+                fontWeight="medium"
+                classN={`flex-1 text-[${colors.orangeDark}]`}>
+                {outstandingSteps} step{outstandingSteps > 1 ? 's' : ''} left to finish setting up
+                your {isSidekick ? 'Sidekick' : 'Hero'} account
+              </Text>
+              <ChevronRight size={16} color={colors.orangeDark} />
+            </PressableScale>
+          )}
+
+          <View style={tw`mt-6 flex-row items-center justify-between`}>
+            <Text variant="subhead" fontWeight="bold" classN={`text-[${fg}]`}>
+              {isSidekick ? 'My Current Task' : 'My Posted Tasks'}
+            </Text>
+            {!isSidekick && tasks.length > 0 && (
+              <Text variant="caption" classN={`text-[${muted}]`}>
+                {tasks.length} task{tasks.length > 1 ? 's' : ''}
+              </Text>
             )}
           </View>
-        ) : (
-          tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onPress={() => handleTaskPress(task)}
-              showLiveBadge={isSidekick}
-            />
-          ))
-        )}
-      </ScrollView>
+
+          {isSidekick && tasks.length > 0 && (
+            <Text variant="caption" classN={`mt-0.5 text-[${muted}]`}>
+              Finish this task before you can accept another
+            </Text>
+          )}
+
+          {!isSidekick && posted.isPending ? (
+            <View style={tw`mt-4`}>
+              {[0, 1, 2].map((index) => (
+                <SkeletonTaskCard key={index} index={index} />
+              ))}
+            </View>
+          ) : tasks.length === 0 ? (
+            isSidekick ? (
+              <EmptyState
+                compact
+                illustration={<OpenSlot />}
+                title="Nothing on your plate"
+                body="Browse tasks nearby and send an offer — you can hold one job at a time."
+                action={{ label: 'Find work', onPress: () => router.push('/(tabs)/post') }}
+              />
+            ) : (
+              <EmptyState
+                compact
+                illustration={<AwaitingOffers />}
+                title="No tasks posted yet"
+                body="Post what you need done and nearby Sidekicks will send you offers."
+                action={{ label: 'Post a task', onPress: () => router.push('/(tabs)/post') }}
+              />
+            )
+          ) : (
+            tasks.map((task, i) => (
+              <StaggerItem key={task.id} index={i}>
+                <TaskCard
+                  task={task}
+                  onPress={() => handleTaskPress(task)}
+                  showLiveBadge={isSidekick}
+                />
+              </StaggerItem>
+            ))
+          )}
+        </ScrollView>
+      </View>
 
       {offersTask && (
         <ReviewOffersSheet
           visible={activeSheet === 'offers'}
           onClose={() => setActiveSheet(null)}
           taskTitle={offersTask.title}
-          offerCount={offersTask.offerCount}
+          taskId={offersTask.id}
         />
       )}
 
-      <RoleSelectSheet visible={!hasChosenRole} onSelect={handleRoleSelect} />
+      {/* Only ask once we know the server doesn't already have an answer.
+          While `user` is null the session is still loading, and showing the
+          sheet then would make a returning user pick a side they already chose. */}
+      <RoleSelectSheet
+        visible={!!user && !hasChosenRole}
+        onSelect={handleRoleSelect}
+        loading={setRoleIntent.isPending}
+      />
     </SafeAreaView>
   );
 }

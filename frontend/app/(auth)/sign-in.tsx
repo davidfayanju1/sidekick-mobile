@@ -1,64 +1,76 @@
 import { router } from 'expo-router';
 import { Apple, ChevronLeft } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GoogleIcon } from '@/components/icons/GoogleIcon';
+import { Button } from '@/components/UI/Button';
 import Form from '@/components/UI/Form';
+import { PressableScale } from '@/components/UI/PressableScale';
 import Text from '@/components/UI/Text';
+import { useSignIn } from '@/lib/api/auth';
+import { apiError, errorMessage } from '@/lib/axios';
+import { signInSchema } from '@/lib/forms/schemas';
+import { useZodForm } from '@/lib/forms/useZodForm';
 import { tw } from '@/lib/tw';
+import { toast } from '@/store/toastStore';
 import { colors } from '@/theme/palette';
 
 export default function SignIn() {
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const signIn = useSignIn();
+  const form = useZodForm(signInSchema, {
+    email: 'davidfayanju01@gmail.com',
+    password: 'appTestPassword23@',
+  });
+
+  const submit = form.handleSubmit(async (credentials) => {
+    try {
+      await signIn.mutateAsync(credentials);
+      router.replace('/(tabs)');
+    } catch (error) {
+      const { status, code, message } = apiError(error);
+      if (__DEV__) console.log('[auth] sign-in failed ←', { status, code, message });
+      toast.error('Couldn’t sign you in', {
+        description: status === 401 ? message : errorMessage(error),
+      });
+    }
+  });
 
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
       <View style={tw`flex-1 px-4`}>
-        <Pressable
+        <PressableScale
           onPress={() => router.back()}
           hitSlop={8}
           style={tw`-ml-2 mt-2 h-10 w-10 items-center justify-center`}>
-          <ChevronLeft size={26} color={colors.iconPrimary} />
-        </Pressable>
+          <ChevronLeft size={26} color={colors.black} />
+        </PressableScale>
 
-        <Text fontWeight="bold" fontSize={24} classN="mt-3 text-black">
+        <Text variant="headline" classN="mt-2 text-black">
           Welcome Back
         </Text>
-        <Text fontSize={14} classN={`mt-1 text-[${colors.textSubtle}]`}>
+        <Text variant="body" classN={`mt-1 text-[${colors.gray400}]`}>
           Sign in to your Sidekick account
         </Text>
 
-        <Pressable
+        <PressableScale
           style={{
-            borderColor: colors.borderStrong,
-            ...tw`mt-6 flex-row items-center justify-center rounded-full border h-[44px]`,
+            borderColor: colors.gray300,
+            ...tw`mt-6 h-[44px] flex-row items-center justify-center rounded-full border`,
           }}>
           <GoogleIcon size={20} />
-          <Text fontWeight="medium" fontSize={14} classN="ml-2 text-black">
+          <Text variant="body" fontWeight="medium" classN="ml-2 text-black">
             Continue with Google
           </Text>
-        </Pressable>
-
-        <Pressable
-          style={{
-            borderColor: colors.borderStrong,
-            ...tw`mt-6 flex-row items-center justify-center rounded-full border h-[44px]`,
-          }}>
-          <Apple size={20} color={colors.iconPrimary} fill={colors.iconPrimary} />
-          <Text fontWeight="medium" fontSize={14} classN="ml-2 text-black">
-            Continue with Apple
-          </Text>
-        </Pressable>
+        </PressableScale>
 
         <View style={tw`mt-6 flex-row items-center gap-3`}>
-          <View style={[tw`h-px flex-1`, { backgroundColor: colors.textMutedAlt }]} />
-          <Text fontSize={12} classN={`text-[${colors.textMutedAlt}]`}>
+          <View style={[tw`h-px flex-1`, { backgroundColor: colors.gray600 }]} />
+          <Text variant="caption" classN={`text-[${colors.gray600}]`}>
             Or sign in with Email
           </Text>
-          <View style={[tw`h-px flex-1`, { backgroundColor: colors.textMutedAlt }]} />
+          <View style={[tw`h-px flex-1`, { backgroundColor: colors.gray600 }]} />
         </View>
 
         <Form
@@ -67,11 +79,11 @@ export default function SignIn() {
           labelStyle="text-black"
           containerStyle="mt-6"
           placeholder=""
-          value={email}
-          onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
           textContentType="emailAddress"
+          returnKeyType="next"
+          {...form.field('email')}
         />
 
         <Form
@@ -81,33 +93,36 @@ export default function SignIn() {
           containerStyle="mt-5"
           placeholder="******"
           type="password"
-          value={password}
-          onChangeText={setPassword}
           textContentType="password"
+          returnKeyType="go"
+          onSubmitEditing={submit}
+          {...form.field('password')}
         />
 
-        <Pressable style={tw`mt-2 self-end`} hitSlop={8}>
-          <Text fontWeight="medium" fontSize={13} classN="text-black">
+        <PressableScale style={tw`mt-2 self-end`} hitSlop={8}>
+          <Text variant="caption" fontWeight="medium" classN="text-black">
             Forgot password?
           </Text>
-        </Pressable>
+        </PressableScale>
 
-        <Pressable
-          style={tw`mt-6 items-center justify-center rounded-full py-4 bg-[${colors.brand}]`}>
-          <Text fontWeight="bold" fontSize={16} classN="text-white">
-            Sign In
-          </Text>
-        </Pressable>
+        <Button
+          label="Sign In"
+          onPress={submit}
+          loading={signIn.isPending}
+          succeeded={signIn.isSuccess}
+          size="lg"
+          style={tw`mt-6`}
+        />
 
-        <View style={tw`mt-4 flex-row items-center justify-center`}>
-          <Text fontSize={13} classN="text-black">
+        <View style={tw`mt-3 flex-row items-center justify-center`}>
+          <Text variant="caption" classN="text-black">
             New here?{' '}
           </Text>
-          <Pressable onPress={() => router.push('/sign-up')} hitSlop={8}>
-            <Text fontWeight="bold" fontSize={13} classN={`text-[${colors.accentOrange}]`}>
+          <PressableScale onPress={() => router.push('/sign-up')} hitSlop={8}>
+            <Text variant="caption" fontWeight="medium" classN={`text-[${colors.orange}]`}>
               Create account
             </Text>
-          </Pressable>
+          </PressableScale>
         </View>
       </View>
     </SafeAreaView>

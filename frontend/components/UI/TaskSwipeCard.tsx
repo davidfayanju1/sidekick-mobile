@@ -40,8 +40,8 @@ function StarRow({ rating }: { rating: number }) {
         <Star
           key={index}
           size={11}
-          color={index < rating ? colors.star : colors.borderLight}
-          fill={index < rating ? colors.star : colors.borderLight}
+          color={index < rating ? colors.star : colors.gray200}
+          fill={index < rating ? colors.star : colors.gray200}
         />
       ))}
     </View>
@@ -76,6 +76,12 @@ export const TaskSwipeCard = React.forwardRef<TaskSwipeCardHandle, TaskSwipeCard
       swipeRight: () => animateOut('right'),
     }));
 
+    // Reanimated shared values are mutable boxes written from worklets, which
+    // the React Compiler's immutability rule has no way to recognise — it sees
+    // `.value =` on a hook result and calls it a render-phase mutation. These
+    // assignments run on the UI thread inside gesture callbacks, never during
+    // render, so the rule is wrong here rather than the code.
+    /* eslint-disable react-hooks/immutability */
     const pan = Gesture.Pan()
       .enabled(active)
       .onUpdate((event) => {
@@ -96,6 +102,7 @@ export const TaskSwipeCard = React.forwardRef<TaskSwipeCardHandle, TaskSwipeCard
           translateY.value = withSpring(0, { damping: 16, stiffness: 180 });
         }
       });
+    /* eslint-enable react-hooks/immutability */
 
     const cardStyle = useAnimatedStyle(() => {
       const rotate = interpolate(
@@ -134,72 +141,72 @@ export const TaskSwipeCard = React.forwardRef<TaskSwipeCardHandle, TaskSwipeCard
         <Animated.View
           style={[
             tw`absolute left-5 top-5 z-10 rounded-lg px-3 py-1`,
-            { borderWidth: 2, borderColor: colors.success, transform: [{ rotate: '-12deg' }] },
+            { borderWidth: 2, borderColor: colors.green, transform: [{ rotate: '-12deg' }] },
             acceptStampStyle,
           ]}>
-          <Text fontWeight="black" fontSize={16} classN={`text-[${colors.success}]`}>
+          <Text variant="subhead" fontWeight="black" classN={`text-[${colors.green}]`}>
             ACCEPT
           </Text>
         </Animated.View>
         <Animated.View
           style={[
             tw`absolute right-5 top-5 z-10 rounded-lg px-3 py-1`,
-            { borderWidth: 2, borderColor: colors.dangerText, transform: [{ rotate: '12deg' }] },
+            { borderWidth: 2, borderColor: colors.danger, transform: [{ rotate: '12deg' }] },
             rejectStampStyle,
           ]}>
-          <Text fontWeight="black" fontSize={16} classN={`text-[${colors.dangerText}]`}>
+          <Text variant="subhead" fontWeight="black" classN={`text-[${colors.danger}]`}>
             PASS
           </Text>
         </Animated.View>
 
         <View style={tw`flex-row items-center justify-between`}>
-          <Text fontWeight="bold" fontSize={11} classN={`text-[${categoryColor}]`}>
+          <Text variant="micro" classN={`text-[${categoryColor}]`}>
             {task.category.toUpperCase()}
           </Text>
-          <Text fontSize={11} classN={`text-[${muted}]`}>
+          <Text variant="micro" fontWeight="normal" classN={`text-[${muted}]`}>
             {task.distanceLabel} • {task.postedAgo}
           </Text>
         </View>
 
-        <Text fontWeight="black" fontSize={19} classN={`mt-2 text-[${fg}]`}>
+        <Text variant="subhead" fontWeight="black" classN={`mt-2 text-[${fg}]`}>
           {task.title}
         </Text>
-        <Text fontSize={13} classN={`mt-1.5 text-[${muted}]`} numberOfLines={3}>
+        <Text variant="caption" classN={`mt-1.5 text-[${muted}]`} numberOfLines={3}>
           {task.description}
         </Text>
 
         <View
           style={[
-            tw`mt-4 flex-row items-center gap-2.5 rounded-2xl p-3`,
+            tw`mt-3 flex-row items-center gap-2.5 rounded-2xl p-3`,
             { backgroundColor: systemColors.grey6 },
           ]}>
           <View
             style={[
               tw`h-10 w-10 items-center justify-center rounded-full`,
-              { backgroundColor: colors.accentSand },
+              { backgroundColor: colors.orangeTint },
             ]}>
-            <Text fontWeight="bold" fontSize={14} classN={`text-[${colors.pendingText}]`}>
+            <Text variant="body" fontWeight="medium" classN={`text-[${colors.orangeDark}]`}>
               {task.heroInitial}
             </Text>
           </View>
           <View style={tw`flex-1`}>
-            <Text fontWeight="bold" fontSize={13} classN={`text-[${fg}]`}>
+            <Text variant="caption" fontWeight="medium" classN={`text-[${fg}]`}>
               {task.heroName}
             </Text>
             <StarRow rating={task.heroRating} />
           </View>
         </View>
 
-        <View style={[tw`mt-4 pt-4`, { borderTopWidth: 1, borderTopColor: systemColors.grey5 }]}>
+        <View style={[tw`mt-3 pt-4`, { borderTopWidth: 1, borderTopColor: systemColors.grey5 }]}>
           <View style={tw`flex-row items-center justify-between`}>
-            <Text fontSize={12} classN={`text-[${muted}]`}>
+            <Text variant="caption" classN={`text-[${muted}]`}>
               {task.location}
             </Text>
-            <Text fontWeight="black" fontSize={17} classN={`text-[${fg}]`}>
+            <Text variant="subhead" fontWeight="black" classN={`text-[${fg}]`}>
               {task.budget}
             </Text>
           </View>
-          <Text fontSize={11} classN={`mt-1 text-[${colors.warning}]`}>
+          <Text variant="micro" fontWeight="normal" classN={`mt-1 text-[${colors.orangeMuted}]`}>
             Min. delivery time: {task.etaWindow}
           </Text>
         </View>

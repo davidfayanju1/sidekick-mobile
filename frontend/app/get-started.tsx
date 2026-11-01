@@ -8,13 +8,14 @@ import {
   IdCard,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
 import { useRoleStore } from '@/store/roleStore';
 import { colors } from '@/theme/palette';
+import { PressableScale } from '@/components/UI/PressableScale';
 
 type Step = {
   key: string;
@@ -71,42 +72,42 @@ export default function GetStarted() {
         style={tw`flex-1 px-4`}
         contentContainerStyle={{ paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}>
-        <Pressable
+        <PressableScale
           onPress={() => router.back()}
           hitSlop={8}
-          style={tw`-ml-2 mt-3 h-10 w-10 items-center justify-center`}>
-          <ChevronLeft size={26} color={colors.iconPrimary} />
-        </Pressable>
+          style={tw`-ml-2 mt-2 h-10 w-10 items-center justify-center`}>
+          <ChevronLeft size={26} color={colors.black} />
+        </PressableScale>
 
-        <Text fontWeight="bold" fontSize={22} classN="mt-2 text-black">
+        <Text variant="title" classN="mt-2 text-black">
           {isSidekick ? "Let's get you set up as a Sidekick" : "Let's get you set up as a Hero"}
         </Text>
-        <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
+        <Text variant="caption" classN={`mt-1.5 text-[${colors.gray700}]`}>
           A couple of quick steps before you {isSidekick ? 'start earning' : 'start posting'}. You
           can also do these later from your profile.
         </Text>
 
         <View style={tw`mt-6 gap-3`}>
           {steps.map(({ key, title, description, icon: Icon, done, pending, onPress }) => (
-            <Pressable
+            <PressableScale
               key={key}
               onPress={onPress}
               style={[
                 tw`flex-row items-center gap-3 rounded-2xl p-4`,
-                { borderWidth: 1, borderColor: colors.borderLight },
+                { borderWidth: 1, borderColor: colors.gray200 },
               ]}>
               <View
                 style={[
                   tw`h-11 w-11 items-center justify-center rounded-xl`,
-                  { backgroundColor: done ? colors.successBg : colors.surface },
+                  { backgroundColor: done ? colors.greenTint : colors.gray50 },
                 ]}>
-                <Icon size={20} color={done ? colors.success : colors.textDisabled} />
+                <Icon size={20} color={done ? colors.green : colors.gray800} />
               </View>
               <View style={tw`flex-1`}>
-                <Text fontWeight="bold" fontSize={14} classN="text-black">
+                <Text variant="body" fontWeight="medium" classN="text-black">
                   {title}
                 </Text>
-                <Text fontSize={12} classN={`mt-0.5 text-[${colors.textSecondary}]`}>
+                <Text variant="caption" classN={`mt-0.5 text-[${colors.gray700}]`}>
                   {description}
                 </Text>
               </View>
@@ -114,34 +115,35 @@ export default function GetStarted() {
                 <View
                   style={[
                     tw`h-6 w-6 items-center justify-center rounded-full`,
-                    { backgroundColor: colors.success },
+                    { backgroundColor: colors.green },
                   ]}>
                   <Check size={13} color="white" strokeWidth={3} />
                 </View>
               ) : pending ? (
-                <View style={[tw`rounded-full px-2.5 py-1`, { backgroundColor: colors.pendingBg }]}>
-                  <Text fontSize={11} classN={`text-[${colors.pendingText}]`}>
+                <View
+                  style={[tw`rounded-full px-2.5 py-1`, { backgroundColor: colors.orangeTint }]}>
+                  <Text variant="micro" fontWeight="normal" classN={`text-[${colors.orangeDark}]`}>
                     Pending
                   </Text>
                 </View>
               ) : (
-                <ChevronRight size={18} color={colors.textMuted} />
+                <ChevronRight size={18} color={colors.gray500} />
               )}
-            </Pressable>
+            </PressableScale>
           ))}
         </View>
 
-        <Pressable
+        <PressableScale
           onPress={() => router.replace('/(tabs)')}
           style={[
             tw`mt-8 items-center justify-center rounded-full py-4`,
-            { backgroundColor: colors.brand },
+            { backgroundColor: colors.primary },
           ]}>
-          <Text fontWeight="bold" fontSize={15} classN="text-white">
+          <Text variant="body" fontWeight="medium" classN="text-white">
             Continue to {isSidekick ? 'Sidekick' : 'Hero'} home
           </Text>
-        </Pressable>
-        <Text fontSize={12} classN={`mt-3 text-center text-[${colors.textMuted}]`}>
+        </PressableScale>
+        <Text variant="caption" classN={`mt-2 text-center text-[${colors.gray500}]`}>
           You can finish these anytime from your profile.
         </Text>
       </ScrollView>

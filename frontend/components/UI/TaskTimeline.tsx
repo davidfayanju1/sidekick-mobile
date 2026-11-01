@@ -9,9 +9,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import Text from '@/components/UI/Text';
-import { ACCENT_TEAL } from '@/components/UI/TaskParts';
 import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
+import { colors } from '@/theme/palette';
 
 function usePulseStyle(maxScale: number) {
   const scale = useSharedValue(1);
@@ -37,11 +37,11 @@ export function LiveDot() {
       <Animated.View
         style={[
           tw`absolute h-2.5 w-2.5 rounded-full`,
-          { backgroundColor: ACCENT_TEAL },
+          { backgroundColor: colors.primary },
           pulseStyle,
         ]}
       />
-      <View style={[tw`h-2 w-2 rounded-full`, { backgroundColor: ACCENT_TEAL }]} />
+      <View style={[tw`h-2 w-2 rounded-full`, { backgroundColor: colors.primary }]} />
     </View>
   );
 }
@@ -50,7 +50,7 @@ function PulsingRing() {
   const pulseStyle = usePulseStyle(1.8);
   return (
     <Animated.View
-      style={[tw`absolute h-8 w-8 rounded-full`, { backgroundColor: ACCENT_TEAL }, pulseStyle]}
+      style={[tw`absolute h-8 w-8 rounded-full`, { backgroundColor: colors.primary }, pulseStyle]}
     />
   );
 }
@@ -89,7 +89,7 @@ export function TaskTimeline({
                   style={[
                     tw`h-8 w-8 items-center justify-center rounded-full`,
                     isReached
-                      ? { backgroundColor: ACCENT_TEAL }
+                      ? { backgroundColor: colors.primary }
                       : {
                           borderWidth: 1.5,
                           borderColor: systemColors.grey4,
@@ -112,7 +112,10 @@ export function TaskTimeline({
                 <View
                   style={[
                     tw`w-px flex-1`,
-                    { backgroundColor: isDone ? ACCENT_TEAL : systemColors.grey4, minHeight: 22 },
+                    {
+                      backgroundColor: isDone ? colors.primary : systemColors.grey4,
+                      minHeight: 22,
+                    },
                   ]}
                 />
               )}
@@ -120,21 +123,22 @@ export function TaskTimeline({
 
             <View style={tw`flex-1 pb-5 pl-3`}>
               <Text
+                variant="body"
                 fontWeight={isCurrent ? 'bold' : 'medium'}
-                fontSize={14}
+
                 classN={`text-[${isReached ? fg : muted}]`}>
                 {step.title}
               </Text>
               {isReached && (
-                <Text fontSize={12} classN={`mt-0.5 text-[${muted}]`}>
+                <Text variant="caption" classN={`mt-0.5 text-[${muted}]`}>
                   {step.description}
                 </Text>
               )}
               {step.timestamp && (
                 <Text
-                  fontWeight="medium"
-                  fontSize={11}
-                  classN={`mt-1 text-[${twColor(ACCENT_TEAL)}]`}>
+                  variant="micro"
+
+                  classN={`mt-1 text-[${twColor(colors.primary)}]`}>
                   {step.timestamp}
                 </Text>
               )}

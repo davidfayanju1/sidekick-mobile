@@ -1,11 +1,13 @@
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import BottomSheet from '@/components/UI/BottomSheet';
+import { Button } from '@/components/UI/Button';
 import Text from '@/components/UI/Text';
 import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
 import type { UserRole } from '@/store/roleStore';
 import { colors } from '@/theme/palette';
+import { PressableScale } from '@/components/UI/PressableScale';
 
 const ROLE_LABEL: Record<UserRole, string> = { hero: 'Hero', sidekick: 'Sidekick' };
 
@@ -15,6 +17,8 @@ interface RoleSwitchSheetProps {
   onConfirm: () => void;
   currentRole: UserRole;
   nextRole: UserRole;
+  /** True while `POST /me/role` is in flight. */
+  loading?: boolean;
 }
 
 export default function RoleSwitchSheet({
@@ -23,45 +27,34 @@ export default function RoleSwitchSheet({
   onConfirm,
   currentRole,
   nextRole,
+  loading = false,
 }: RoleSwitchSheetProps) {
   const { colors: systemColors } = useColorScheme();
 
   return (
-    <BottomSheet visible={visible} onClose={onClose}>
-      <Text fontWeight="black" fontSize={20} classN={`text-[${twColor(systemColors.foreground)}]`}>
+    // Not dismissable mid-save: the role only changes once the server agrees.
+    <BottomSheet visible={visible} onClose={loading ? () => {} : onClose}>
+      <Text
+        variant="title"
+        fontWeight="black"
+        classN={`text-[${twColor(systemColors.foreground)}]`}>
         Switch to {ROLE_LABEL[nextRole]}?
       </Text>
-      <Text fontSize={13} classN={`mt-2 text-[${twColor(systemColors.mutedForeground)}]`}>
+      <Text variant="caption" classN={`mt-2 text-[${twColor(systemColors.mutedForeground)}]`}>
         You&rsquo;re about to switch from {ROLE_LABEL[currentRole]} to {ROLE_LABEL[nextRole]}. Your
         home screen, tasks, and available actions will change to match the {ROLE_LABEL[nextRole]}{' '}
         experience. Anything you&rsquo;ve already set up for either role is kept, and you can switch
         back at any time from your profile.
       </Text>
 
-      <View style={tw`mt-5 gap-3`}>
-        <Pressable
+      <View style={tw`mt-5 gap-2.5`}>
+        <Button
+          label={`Switch to ${ROLE_LABEL[nextRole]}`}
           onPress={onConfirm}
-          style={[
-            tw`items-center justify-center rounded-full py-4`,
-            { backgroundColor: colors.brand },
-          ]}>
-          <Text fontWeight="bold" fontSize={15} classN="text-white">
-            Switch to {ROLE_LABEL[nextRole]}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={onClose}
-          style={[
-            tw`items-center justify-center rounded-full py-4`,
-            { borderWidth: 1, borderColor: systemColors.grey4 },
-          ]}>
-          <Text
-            fontWeight="bold"
-            fontSize={15}
-            classN={`text-[${twColor(systemColors.foreground)}]`}>
-            Cancel
-          </Text>
-        </Pressable>
+          loading={loading}
+          size="lg"
+        />
+        <Button label="Cancel" onPress={onClose} disabled={loading} variant="outline" size="lg" />
       </View>
     </BottomSheet>
   );

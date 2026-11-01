@@ -1,17 +1,10 @@
 import React from 'react';
-import {
-  Animated,
-  Dimensions,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  View,
-} from 'react-native';
+import { Animated, Dimensions, KeyboardAvoidingView, Modal, Platform, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { tw } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
+import { PressableScale } from '@/components/UI/PressableScale';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -23,13 +16,20 @@ interface BottomSheetProps {
 
 export default function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
   const { colors: systemColors } = useColorScheme();
-  const translateY = React.useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const backdropOpacity = React.useRef(new Animated.Value(0)).current;
+  // `useState` with an initialiser, not `useRef(...).current`: reading a ref
+  // during render is what the React Compiler rules forbid, and this gives the
+  // same "create once, keep forever" behaviour without the violation.
+  const [translateY] = React.useState(() => new Animated.Value(SCREEN_HEIGHT));
+  const [backdropOpacity] = React.useState(() => new Animated.Value(0));
   const [rendered, setRendered] = React.useState(visible);
+
+  // Mount during render rather than in an effect. Setting state inside the
+  // effect would queue a second render pass before the sheet ever paints, so
+  // the entrance animation could start against a stale frame.
+  if (visible && !rendered) setRendered(true);
 
   React.useEffect(() => {
     if (visible) {
-      setRendered(true);
       Animated.parallel([
         Animated.timing(backdropOpacity, { toValue: 1, duration: 220, useNativeDriver: true }),
         Animated.spring(translateY, {
@@ -59,14 +59,14 @@ export default function BottomSheet({ visible, onClose, children }: BottomSheetP
   return (
     <Modal transparent visible animationType="none" statusBarTranslucent onRequestClose={onClose}>
       <View style={tw`flex-1`}>
-        <Pressable style={tw`absolute top-0 bottom-0 left-0 right-0`} onPress={onClose}>
+        <PressableScale style={tw`absolute top-0 bottom-0 left-0 right-0`} onPress={onClose}>
           <Animated.View
             style={[
               tw`flex-1`,
               { backgroundColor: 'rgba(15,20,24,0.55)', opacity: backdropOpacity },
             ]}
           />
-        </Pressable>
+        </PressableScale>
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}

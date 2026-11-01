@@ -1,15 +1,25 @@
 import { router } from 'expo-router';
 import { ArrowDownLeft, ArrowUpRight, ChevronLeft, Landmark } from 'lucide-react-native';
 import * as React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Text from '@/components/UI/Text';
-import { CARD_SHADOW, formatNaira } from '@/components/UI/TaskParts';
+import { CARD_SHADOW } from '@/components/UI/TaskParts';
 import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
+import { EmptyState, ErrorState } from '@/components/UI/EmptyState';
+import { FlatLedger } from '@/components/UI/illustrations';
+import { Skeleton } from '@/components/UI/Skeleton';
+import { toDisplayTransaction } from '@/lib/api/adapters';
+import { useTransactions } from '@/lib/api/finance';
+import { errorMessage } from '@/lib/axios';
+import { money } from '@/lib/format';
+import { useAuthStore } from '@/store/authStore';
 import { useRoleStore } from '@/store/roleStore';
 import { colors } from '@/theme/palette';
+import { PressableScale } from '@/components/UI/PressableScale';
+import { StaggerItem } from '@/components/UI/Stagger';
 
 export type TransactionType = 'payment' | 'refund' | 'earning' | 'withdrawal';
 
@@ -19,92 +29,14 @@ export type Transaction = {
   title: string;
   date: string;
   amount: number;
-  status: 'completed' | 'pending';
+  status: 'completed' | 'pending' | 'failed';
 };
 
-export const HERO_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'h1',
-    type: 'payment',
-    title: 'Deep clean 2-bedroom apartment',
-    date: 'Jul 24, 2026',
-    amount: -50000,
-    status: 'pending',
-  },
-  {
-    id: 'h2',
-    type: 'payment',
-    title: 'Laptop battery repair',
-    date: 'Jul 20, 2026',
-    amount: -50000,
-    status: 'pending',
-  },
-  {
-    id: 'h3',
-    type: 'refund',
-    title: 'Pick up groceries — offer cancelled',
-    date: 'Jul 15, 2026',
-    amount: 12000,
-    status: 'completed',
-  },
-  {
-    id: 'h4',
-    type: 'payment',
-    title: 'Home WiFi setup',
-    date: 'Jul 10, 2026',
-    amount: -8000,
-    status: 'completed',
-  },
-];
-
-export const SIDEKICK_TRANSACTIONS: Transaction[] = [
-  {
-    id: 's1',
-    type: 'earning',
-    title: 'Weekly apartment cleaning',
-    date: 'Jul 24, 2026',
-    amount: 18000,
-    status: 'pending',
-  },
-  {
-    id: 's2',
-    type: 'withdrawal',
-    title: 'Withdrawal to GTBank ****1234',
-    date: 'Jul 18, 2026',
-    amount: -45000,
-    status: 'completed',
-  },
-  {
-    id: 's3',
-    type: 'earning',
-    title: 'Laptop battery repair',
-    date: 'Jul 12, 2026',
-    amount: 9800,
-    status: 'completed',
-  },
-  {
-    id: 's4',
-    type: 'earning',
-    title: 'Grocery delivery',
-    date: 'Jul 5, 2026',
-    amount: 6500,
-    status: 'completed',
-  },
-  {
-    id: 's5',
-    type: 'earning',
-    title: 'Furniture assembly',
-    date: 'Jul 1, 2026',
-    amount: 32000,
-    status: 'completed',
-  },
-];
-
 const TYPE_META: Record<TransactionType, { icon: typeof ArrowUpRight; color: string }> = {
-  payment: { icon: ArrowUpRight, color: colors.dangerText },
-  refund: { icon: ArrowDownLeft, color: colors.success },
-  earning: { icon: ArrowDownLeft, color: colors.success },
-  withdrawal: { icon: Landmark, color: colors.pendingText },
+  payment: { icon: ArrowUpRight, color: colors.danger },
+  refund: { icon: ArrowDownLeft, color: colors.green },
+  earning: { icon: ArrowDownLeft, color: colors.green },
+  withdrawal: { icon: Landmark, color: colors.orangeDark },
 };
 
 const HERO_FILTERS: { key: 'all' | TransactionType; label: string }[] = [
@@ -141,20 +73,22 @@ export function TransactionRow({ transaction }: { transaction: Transaction }) {
         <Icon size={17} color={color} />
       </View>
       <View style={tw`flex-1`}>
-        <Text fontWeight="bold" fontSize={13} classN={`text-[${fg}]`} numberOfLines={1}>
+        <Text variant="caption" fontWeight="medium" classN={`text-[${fg}]`} numberOfLines={1}>
           {transaction.title}
         </Text>
-        <Text fontSize={11} classN={`mt-0.5 text-[${muted}]`}>
+        <Text variant="micro" fontWeight="normal" classN={`mt-0.5 text-[${muted}]`}>
           {transaction.date}
           {transaction.status === 'pending' ? ' • Pending' : ''}
+          {transaction.status === 'failed' ? ' • Failed' : ''}
         </Text>
       </View>
       <Text
-        fontWeight="bold"
-        fontSize={14}
-        classN={`text-[${isCredit ? twColor(colors.success) : fg}]`}>
+        variant="body"
+        fontWeight="medium"
+
+        classN={`text-[${isCredit ? twColor(colors.green) : fg}]`}>
         {isCredit ? '+' : '-'}
-        {formatNaira(Math.abs(transaction.amount))}
+        {money(Math.abs(transaction.amount))}
       </Text>
     </View>
   );
@@ -167,7 +101,14 @@ export default function PaymentHistory() {
   const fg = twColor(systemColors.foreground);
   const muted = twColor(systemColors.mutedForeground);
 
-  const transactions = isSidekick ? SIDEKICK_TRANSACTIONS : HERO_TRANSACTIONS;
+  const currentUserId = useAuthStore((state) => state.user?.id);
+  const ledger = useTransactions();
+
+  const transactions = React.useMemo(
+    () => (ledger.data ?? []).map((item) => toDisplayTransaction(item, currentUserId)),
+    [ledger.data, currentUserId]
+  );
+
   const filters = isSidekick ? SIDEKICK_FILTERS : HERO_FILTERS;
   const [filter, setFilter] = React.useState<'all' | TransactionType>('all');
 
@@ -179,10 +120,10 @@ export default function PaymentHistory() {
       style={[tw`flex-1`, { backgroundColor: systemColors.background }]}
       edges={['top', 'bottom']}>
       <View style={tw`flex-row items-center gap-3 px-4 pb-3 pt-2`}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
+        <PressableScale onPress={() => router.back()} hitSlop={8}>
           <ChevronLeft size={24} color={systemColors.foreground} />
-        </Pressable>
-        <Text fontWeight="bold" fontSize={16} classN={`text-[${fg}]`}>
+        </PressableScale>
+        <Text variant="subhead" fontWeight="bold" classN={`text-[${fg}]`}>
           Payment History
         </Text>
       </View>
@@ -191,13 +132,13 @@ export default function PaymentHistory() {
         {filters.map(({ key, label }) => {
           const isActive = filter === key;
           return (
-            <Pressable
+            <PressableScale
               key={key}
               onPress={() => setFilter(key)}
               style={[
                 tw`rounded-full px-4 py-2`,
                 isActive
-                  ? { backgroundColor: colors.brand }
+                  ? { backgroundColor: colors.primary }
                   : { borderWidth: 1, borderColor: systemColors.grey5 },
               ]}>
               <Text
@@ -206,7 +147,7 @@ export default function PaymentHistory() {
                 classN={isActive ? 'text-white' : `text-[${muted}]`}>
                 {label}
               </Text>
-            </Pressable>
+            </PressableScale>
           );
         })}
       </View>
@@ -215,16 +156,32 @@ export default function PaymentHistory() {
         style={tw`flex-1 px-4`}
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}>
-        {visible.length === 0 ? (
-          <View style={tw`mt-16 items-center`}>
-            <Text fontSize={13} classN={`text-[${muted}]`}>
-              Nothing here yet
-            </Text>
+        {ledger.isPending ? (
+          <View style={tw`gap-3`}>
+            {[0, 1, 2, 3, 4].map((index) => (
+              <Skeleton key={index} index={index} height={68} radius={16} />
+            ))}
           </View>
+        ) : ledger.isError ? (
+          <ErrorState body={errorMessage(ledger.error)} onRetry={() => ledger.refetch()} />
+        ) : visible.length === 0 ? (
+          <EmptyState
+            illustration={<FlatLedger />}
+            title={filter === 'all' ? 'No money has moved yet' : 'Nothing under this filter'}
+            body={
+              filter === 'all'
+                ? isSidekick
+                  ? 'Your earnings will appear here once you complete your first task.'
+                  : 'Payments show up here as soon as you fund your first task.'
+                : 'Try a different filter to see the rest of your history.'
+            }
+          />
         ) : (
           <View style={tw`gap-3`}>
-            {visible.map((transaction) => (
-              <TransactionRow key={transaction.id} transaction={transaction} />
+            {visible.map((transaction, i) => (
+              <StaggerItem key={transaction.id} index={i}>
+                <TransactionRow transaction={transaction} />
+              </StaggerItem>
             ))}
           </View>
         )}

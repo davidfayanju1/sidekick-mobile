@@ -1,47 +1,58 @@
 import { BadgeCheck, Check, Image as ImageIcon, Star } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { ScrollView, TextInput, View } from 'react-native';
 
 import BottomSheet from '@/components/UI/BottomSheet';
+import { Button } from '@/components/UI/Button';
+import { EmptyState, ErrorState } from '@/components/UI/EmptyState';
+import { AwaitingOffers } from '@/components/UI/illustrations';
+import { Skeleton } from '@/components/UI/Skeleton';
 import Text from '@/components/UI/Text';
+import { useAcceptOffer, useCounterOffer, useDeclineOffer, useTaskOffers } from '@/lib/api/offers';
+import type { OfferWithWorker } from '@/lib/api/schemas';
+import { errorMessage } from '@/lib/axios';
+import { money } from '@/lib/format';
+import { counterSchema } from '@/lib/forms/schemas';
+import { locale } from '@/lib/locale';
 import { tw } from '@/lib/tw';
+import { toast } from '@/store/toastStore';
 import { colors } from '@/theme/palette';
+import { PressableScale } from '@/components/UI/PressableScale';
 
-function PrimaryButton({ label, onPress }: { label: string; onPress?: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        tw`items-center justify-center rounded-full py-4`,
-        { backgroundColor: colors.brand },
-      ]}>
-      <Text fontWeight="bold" fontSize={15} classN="text-white">
-        {label}
-      </Text>
-    </Pressable>
-  );
+function PrimaryButton({
+  label,
+  onPress,
+  loading,
+  disabled,
+}: {
+  label: string;
+  onPress?: () => void;
+  loading?: boolean;
+  disabled?: boolean;
+}) {
+  return <Button label={label} onPress={onPress} loading={loading} disabled={disabled} size="lg" />;
 }
 
 function OutlineButton({
   label,
   onPress,
-  color = colors.textPrimary,
+  color = colors.gray900,
 }: {
   label: string;
   onPress?: () => void;
   color?: string;
 }) {
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       style={[
         tw`items-center justify-center rounded-full py-4`,
-        { borderWidth: 1, borderColor: colors.borderLight, backgroundColor: 'white' },
+        { borderWidth: 1, borderColor: colors.gray200, backgroundColor: 'white' },
       ]}>
-      <Text fontWeight="bold" fontSize={15} classN={`text-[${color}]`}>
+      <Text variant="body" fontWeight="medium" classN={`text-[${color}]`}>
         {label}
       </Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -49,6 +60,9 @@ interface ConfirmTaskSheetProps {
   visible: boolean;
   onClose: () => void;
   onReportDispute: () => void;
+  /** Releases escrow to the Sidekick. Irreversible, so it confirms here first. */
+  onConfirm: () => void;
+  confirming?: boolean;
   sidekickName: string;
   price: string;
   photoCount?: number;
@@ -58,43 +72,49 @@ export function ConfirmTaskSheet({
   visible,
   onClose,
   onReportDispute,
+  onConfirm,
+  confirming = false,
   sidekickName,
   price,
   photoCount = 2,
 }: ConfirmTaskSheetProps) {
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <Text fontWeight="black" fontSize={20} classN="text-black">
+      <Text variant="title" fontWeight="black" classN="text-black">
         Confirm Task done?
       </Text>
-      <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
+      <Text variant="caption" classN={`mt-1.5 text-[${colors.gray700}]`}>
         {sidekickName} has marked this complete. Confirm to release payment.
       </Text>
 
-      <Pressable
+      <PressableScale
         style={[
-          tw`mt-4 flex-row items-center gap-3 rounded-2xl p-3`,
-          { borderWidth: 1, borderColor: colors.borderLight },
+          tw`mt-3 flex-row items-center gap-3 rounded-2xl p-3`,
+          { borderWidth: 1, borderColor: colors.gray200 },
         ]}>
         <View
           style={[
             tw`h-11 w-11 items-center justify-center rounded-xl`,
-            { backgroundColor: colors.surface },
+            { backgroundColor: colors.gray50 },
           ]}>
-          <ImageIcon size={20} color={colors.textSecondary} />
+          <ImageIcon size={20} color={colors.gray700} />
         </View>
         <View style={tw`flex-1`}>
-          <Text fontWeight="bold" fontSize={13} classN="text-black">
+          <Text variant="caption" fontWeight="medium" classN="text-black">
             {photoCount} photos attached as proof
           </Text>
-          <Text fontSize={11} classN={`mt-0.5 text-[${colors.textMuted}]`}>
+          <Text variant="micro" fontWeight="normal" classN={`mt-0.5 text-[${colors.gray500}]`}>
             Sent by {sidekickName.split(' ')[0]} • Tap to view
           </Text>
         </View>
-      </Pressable>
+      </PressableScale>
 
       <View style={tw`mt-5 gap-3`}>
-        <PrimaryButton label={`Confirm and pay ${price}`} onPress={onClose} />
+        <PrimaryButton
+          label={`Confirm and pay ${price}`}
+          onPress={onConfirm}
+          loading={confirming}
+        />
         <OutlineButton label="Report a dispute" onPress={onReportDispute} color={colors.danger} />
       </View>
     </BottomSheet>
@@ -123,19 +143,25 @@ const DISPUTE_REASONS = [
 interface DisputeSheetProps {
   visible: boolean;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit: (reason: string, description: string) => void;
+  submitting?: boolean;
 }
 
-export function DisputeSheet({ visible, onClose, onSubmit }: DisputeSheetProps) {
+export function DisputeSheet({
+  visible,
+  onClose,
+  onSubmit,
+  submitting = false,
+}: DisputeSheetProps) {
   const [selected, setSelected] = React.useState<string>(DISPUTE_REASONS[0].id);
   const [note, setNote] = React.useState('');
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <Text fontWeight="black" fontSize={20} classN="text-black">
+      <Text variant="title" fontWeight="black" classN="text-black">
         Raise a Dispute
       </Text>
-      <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
+      <Text variant="caption" classN={`mt-1.5 text-[${colors.gray700}]`}>
         Select the issue. Our team reviews within 24h.
       </Text>
 
@@ -143,39 +169,37 @@ export function DisputeSheet({ visible, onClose, onSubmit }: DisputeSheetProps) 
         {DISPUTE_REASONS.map((reason) => {
           const isSelected = selected === reason.id;
           return (
-            <Pressable
+            <PressableScale
               key={reason.id}
               onPress={() => setSelected(reason.id)}
               style={[
-                tw`mt-3 flex-row items-start gap-3 rounded-2xl p-4`,
-                { backgroundColor: colors.surface },
+                tw`mt-2 flex-row items-start gap-3 rounded-2xl p-4`,
+                { backgroundColor: colors.gray50 },
               ]}>
               <View
                 style={[
                   tw`mt-0.5 h-5 w-5 items-center justify-center rounded-full`,
                   {
                     borderWidth: 2,
-                    borderColor: isSelected ? colors.textPrimary : colors.borderRadio,
+                    borderColor: isSelected ? colors.gray900 : colors.gray300,
                   },
                 ]}>
-                {isSelected && (
-                  <View style={tw`h-2.5 w-2.5 rounded-full bg-[${colors.textPrimary}]`} />
-                )}
+                {isSelected && <View style={tw`h-2.5 w-2.5 rounded-full bg-[${colors.gray900}]`} />}
               </View>
               <View style={tw`flex-1`}>
-                <Text fontWeight="bold" fontSize={14} classN="text-black">
+                <Text variant="body" fontWeight="medium" classN="text-black">
                   {reason.title}
                 </Text>
-                <Text fontSize={12} classN={`mt-0.5 text-[${colors.textMuted}]`}>
+                <Text variant="caption" classN={`mt-0.5 text-[${colors.gray500}]`}>
                   {reason.description}
                 </Text>
               </View>
-            </Pressable>
+            </PressableScale>
           );
         })}
       </View>
 
-      <Text fontWeight="bold" fontSize={13} classN="mt-4 text-black">
+      <Text variant="caption" fontWeight="medium" classN="mt-3 text-black">
         Additional Information
       </Text>
       <TextInput
@@ -183,12 +207,12 @@ export function DisputeSheet({ visible, onClose, onSubmit }: DisputeSheetProps) 
         value={note}
         onChangeText={setNote}
         placeholder=""
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={colors.gray500}
         style={[
           tw`mt-2 rounded-2xl p-4 text-black`,
           {
             borderWidth: 1,
-            borderColor: colors.borderLight,
+            borderColor: colors.gray200,
             minHeight: 96,
             textAlignVertical: 'top',
           },
@@ -196,79 +220,63 @@ export function DisputeSheet({ visible, onClose, onSubmit }: DisputeSheetProps) 
       />
 
       <View style={tw`mt-5 gap-3`}>
-        <Pressable
-          onPress={onSubmit}
-          style={[
-            tw`items-center justify-center rounded-full py-4`,
-            { backgroundColor: colors.danger },
-          ]}>
-          <Text fontWeight="bold" fontSize={15} classN="text-white">
-            Submit Dispute
-          </Text>
-        </Pressable>
+        <Button
+          label="Submit Dispute"
+          variant="danger"
+          size="lg"
+          loading={submitting}
+          // The API needs at least 20 characters of description; the reason
+          // title stands in when the user adds nothing of their own.
+          onPress={() =>
+            onSubmit(
+              selected,
+              note.trim() ||
+                DISPUTE_REASONS.find((reason) => reason.id === selected)?.description ||
+                ''
+            )
+          }
+        />
         <OutlineButton label="Cancel" onPress={onClose} />
       </View>
     </BottomSheet>
   );
 }
 
-type OfferActionType = 'review' | 'start';
+/**
+ * An offer as this sheet draws it, built from `OfferWithWorker`.
+ *
+ * The API sends the worker's reputation alongside the offer precisely so this
+ * card can be rendered without a second request per row.
+ */
+function toOfferCard(offer: OfferWithWorker) {
+  const name = offer.worker_display_name ?? 'Sidekick';
+  return {
+    id: offer.id,
+    name,
+    initial: name.charAt(0).toUpperCase(),
+    rating: Math.round(offer.worker_rating_avg ?? 0),
+    tasksCompleted: offer.worker_tasks_completed ?? 0,
+    price: money(offer.amount),
+    // A counter is an offer at a price the poster didn't set.
+    priceLabel: offer.is_counter ? 'Counter-offer' : 'At your budget',
+    reason: offer.message ?? undefined,
+    isCounter: !!offer.is_counter,
+  };
+}
 
-type Offer = {
-  id: string;
-  name: string;
-  initial: string;
-  avatarBg: string;
-  avatarText: string;
-  rating: number;
-  tasksCompleted: number;
-  price: string;
-  priceLabel: string;
-  reason?: string;
-  actionType: OfferActionType;
-};
+type OfferCardModel = ReturnType<typeof toOfferCard>;
 
-const OFFERS: Offer[] = [
-  {
-    id: '1',
-    name: 'Tunde A.',
-    initial: 'T',
-    avatarBg: colors.accentSand,
-    avatarText: colors.pendingText,
-    rating: 4,
-    tasksCompleted: 45,
-    price: '₦12,000',
-    priceLabel: 'Counter-offer',
-    reason: 'Traffic is heavy today, need extra time and fuel',
-    actionType: 'review',
-  },
-  {
-    id: '2',
-    name: 'Pelumi Daniels',
-    initial: 'P',
-    avatarBg: colors.scheduledBg,
-    avatarText: colors.scheduledText,
-    rating: 4,
-    tasksCompleted: 70,
-    price: '₦15,000',
-    priceLabel: 'Counter-offer',
-    reason: 'Traffic is heavy today, need extra time and fuel',
-    actionType: 'review',
-  },
-  {
-    id: '3',
-    name: 'John Grace',
-    initial: 'J',
-    avatarBg: colors.successBg,
-    avatarText: colors.success,
-    rating: 4,
-    tasksCompleted: 45,
-    price: '₦10,000',
-    priceLabel: 'On budget',
-    reason: 'Traffic is heavy today, need extra time and fuel',
-    actionType: 'start',
-  },
-];
+/** Avatar tints, derived from the offer id so a card keeps its colour. */
+const OFFER_TINTS = [
+  { bg: colors.orangeTint, text: colors.orangeDark },
+  { bg: colors.primaryTint, text: colors.primary },
+  { bg: colors.greenTint, text: colors.green },
+] as const;
+
+function offerTint(id: string) {
+  const sum = [...id].reduce((total, character) => total + character.charCodeAt(0), 0);
+  return OFFER_TINTS[sum % OFFER_TINTS.length];
+}
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -277,119 +285,105 @@ function StarRating({ rating }: { rating: number }) {
         <Star
           key={index}
           size={10}
-          color={index < rating ? colors.star : colors.borderLight}
-          fill={index < rating ? colors.star : colors.borderLight}
+          color={index < rating ? colors.star : colors.gray200}
+          fill={index < rating ? colors.star : colors.gray200}
         />
       ))}
     </View>
   );
 }
 
-function OfferCard({ offer }: { offer: Offer }) {
+function OfferCard({
+  offer,
+  onAccept,
+  onCounter,
+  onDecline,
+  busy,
+}: {
+  offer: OfferCardModel;
+  onAccept: () => void;
+  onCounter: () => void;
+  onDecline: () => void;
+  busy: boolean;
+}) {
   return (
-    <View style={[tw`mt-4 rounded-2xl p-4`, { borderWidth: 1, borderColor: colors.borderCard }]}>
+    <View style={[tw`mt-3 rounded-2xl p-4`, { borderWidth: 1, borderColor: colors.gray100 }]}>
       <View style={tw`flex-row items-start justify-between`}>
         <View style={tw`flex-1 flex-row items-center gap-2.5`}>
           <View
             style={[
               tw`h-10 w-10 items-center justify-center rounded-full`,
-              { backgroundColor: offer.avatarBg },
+              { backgroundColor: offerTint(offer.id).bg },
             ]}>
-            <Text fontWeight="bold" fontSize={14} classN={`text-[${offer.avatarText}]`}>
+            <Text variant="body" fontWeight="medium" classN={`text-[${offerTint(offer.id).text}]`}>
               {offer.initial}
             </Text>
           </View>
           <View style={tw`flex-1`}>
             <View style={tw`flex-row items-center gap-1`}>
-              <Text fontWeight="bold" fontSize={14} classN="text-black">
+              <Text variant="body" fontWeight="medium" classN="text-black">
                 {offer.name}
               </Text>
-              <BadgeCheck size={13} color={colors.brand} fill={colors.brand} />
+              <BadgeCheck size={13} color={colors.primary} fill={colors.primary} />
             </View>
             <View style={tw`mt-1 flex-row items-center gap-1.5`}>
               <StarRating rating={offer.rating} />
-              <Text fontSize={11} classN={`text-[${colors.textMuted}]`}>
+              <Text variant="micro" fontWeight="normal" classN={`text-[${colors.gray500}]`}>
                 ({offer.tasksCompleted} Tasks)
               </Text>
             </View>
           </View>
         </View>
         <View style={tw`items-end`}>
-          <Text fontWeight="bold" fontSize={15} classN="text-black">
+          <Text variant="body" fontWeight="medium" classN="text-black">
             {offer.price}
           </Text>
-          <Text fontSize={11} classN={`mt-0.5 text-[${colors.textMuted}]`}>
+          <Text variant="micro" fontWeight="normal" classN={`mt-0.5 text-[${colors.gray500}]`}>
             {offer.priceLabel}
           </Text>
         </View>
       </View>
 
       {offer.reason && (
-        <View style={tw`mt-3`}>
-          <Text fontWeight="bold" fontSize={11} classN="text-black">
-            Reasons for counter offer
+        <View style={tw`mt-2`}>
+          <Text variant="micro" classN="text-black">
+            {offer.isCounter ? 'Reasons for counter offer' : 'Their pitch'}
           </Text>
-          <View style={[tw`mt-1.5 rounded-xl px-3 py-2.5`, { backgroundColor: colors.surface }]}>
-            <Text fontSize={12} classN={`italic text-[${colors.textSecondary}]`}>
+          <View style={[tw`mt-1.5 rounded-xl px-3 py-2.5`, { backgroundColor: colors.gray50 }]}>
+            <Text variant="caption" classN={`italic text-[${colors.gray700}]`}>
               &ldquo;{offer.reason}&rdquo;
             </Text>
           </View>
         </View>
       )}
 
-      <View style={tw`mt-3 flex-row gap-2`}>
-        {offer.actionType === 'review' ? (
-          <>
-            <Pressable
-              style={[
-                tw`flex-1 items-center justify-center rounded-full py-3`,
-                { borderWidth: 1, borderColor: colors.borderLight },
-              ]}>
-              <Text fontWeight="bold" fontSize={13} classN="text-black">
-                Accept
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                tw`flex-1 items-center justify-center rounded-full py-3`,
-                { backgroundColor: colors.brand },
-              ]}>
-              <Text fontWeight="bold" fontSize={13} classN="text-white">
-                Counter
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                tw`flex-1 items-center justify-center rounded-full py-3`,
-                { borderWidth: 1, borderColor: colors.borderLight },
-              ]}>
-              <Text fontWeight="bold" fontSize={13} classN="text-black">
-                Decline
-              </Text>
-            </Pressable>
-          </>
-        ) : (
-          <>
-            <Pressable
-              style={[
-                tw`flex-1 items-center justify-center rounded-full py-3`,
-                { backgroundColor: colors.brand },
-              ]}>
-              <Text fontWeight="bold" fontSize={13} classN="text-white">
-                Start Task
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                tw`flex-1 items-center justify-center rounded-full py-3`,
-                { borderWidth: 1, borderColor: colors.borderLight },
-              ]}>
-              <Text fontWeight="bold" fontSize={13} classN="text-black">
-                Cancel
-              </Text>
-            </Pressable>
-          </>
-        )}
+      <View style={tw`mt-2 flex-row gap-2`}>
+        <Button
+          label="Accept"
+          variant="outline"
+          size="sm"
+          onPress={onAccept}
+          disabled={busy}
+          fullWidth={false}
+          style={tw`flex-1`}
+        />
+        <Button
+          label="Counter"
+          size="sm"
+          onPress={onCounter}
+          disabled={busy}
+          fullWidth={false}
+          style={tw`flex-1`}
+        />
+        <Button
+          label="Decline"
+          variant="outline"
+          size="sm"
+          onPress={onDecline}
+          disabled={busy}
+          fullWidth={false}
+          style={tw`flex-1`}
+        />
       </View>
     </View>
   );
@@ -399,34 +393,142 @@ interface ReviewOffersSheetProps {
   visible: boolean;
   onClose: () => void;
   taskTitle: string;
-  offerCount?: number;
+  taskId: string;
 }
 
-export function ReviewOffersSheet({
-  visible,
-  onClose,
-  taskTitle,
-  offerCount = 4,
-}: ReviewOffersSheetProps) {
+/**
+ * The poster's decision point: accept an offer, counter it once, or decline.
+ *
+ * Accepting is the hinge of the whole marketplace — it assigns the task and
+ * opens the chat — so it asks for confirmation and closes the sheet on success
+ * rather than leaving a stale list on screen.
+ */
+export function ReviewOffersSheet({ visible, onClose, taskTitle, taskId }: ReviewOffersSheetProps) {
+  const offers = useTaskOffers(visible ? taskId : undefined);
+  const acceptOffer = useAcceptOffer(taskId);
+  const declineOffer = useDeclineOffer(taskId);
+  const counterOffer = useCounterOffer(taskId);
+
+  const [counteringId, setCounteringId] = React.useState<string | null>(null);
+  const [counterAmount, setCounterAmount] = React.useState('');
+
+  const pending = (offers.data ?? []).filter((offer) => offer.status === 'pending');
+  const busy = acceptOffer.isPending || declineOffer.isPending || counterOffer.isPending;
+
+  const handleAccept = async (offerId: string) => {
+    try {
+      await acceptOffer.mutateAsync(offerId);
+      toast.success('Offer accepted', {
+        description: 'Your escrow is held and a chat is now open with your Sidekick.',
+      });
+      onClose();
+    } catch (error) {
+      toast.error('Couldn’t accept that offer', { description: errorMessage(error) });
+    }
+  };
+
+  const handleDecline = async (offerId: string) => {
+    try {
+      await declineOffer.mutateAsync({ offerId });
+      toast.info('Offer declined');
+    } catch (error) {
+      toast.error('Couldn’t decline that offer', { description: errorMessage(error) });
+    }
+  };
+
+  const handleCounter = async (offerId: string) => {
+    const parsed = counterSchema.safeParse({ amount: counterAmount });
+    if (!parsed.success) {
+      toast.warning(parsed.error.issues[0]?.message ?? 'Enter an amount');
+      return;
+    }
+    try {
+      await counterOffer.mutateAsync({ offerId, amount: parsed.data.amount });
+      setCounteringId(null);
+      setCounterAmount('');
+      toast.success('Counter sent', { description: 'You get one counter per offer.' });
+    } catch (error) {
+      toast.error('Couldn’t send that counter', { description: errorMessage(error) });
+    }
+  };
+
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <Text fontWeight="black" fontSize={20} classN="text-black">
+      <Text variant="title" fontWeight="black" classN="text-black">
         Review offers
       </Text>
-      <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
-        {offerCount} Sidekicks offered on &ldquo;{taskTitle}&rdquo;
+      <Text variant="caption" classN={`mt-1.5 text-[${colors.gray700}]`}>
+        {pending.length === 0
+          ? `No open offers on “${taskTitle}” yet`
+          : `${pending.length} Sidekick${pending.length === 1 ? '' : 's'} offered on “${taskTitle}”`}
       </Text>
 
       <ScrollView
         style={{ maxHeight: 420 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={tw`pb-1`}>
-        {OFFERS.map((offer) => (
-          <OfferCard key={offer.id} offer={offer} />
-        ))}
+        {offers.isPending ? (
+          <View style={tw`mt-3 gap-3`}>
+            {[0, 1].map((index) => (
+              <Skeleton key={index} index={index} height={150} radius={16} />
+            ))}
+          </View>
+        ) : offers.isError ? (
+          <ErrorState compact body={errorMessage(offers.error)} onRetry={() => offers.refetch()} />
+        ) : pending.length === 0 ? (
+          <EmptyState
+            compact
+            illustration={<AwaitingOffers />}
+            title="No offers yet"
+            body="Sidekicks nearby can see your task. Offers usually arrive within the hour."
+          />
+        ) : (
+          pending.map((offer) => {
+            const card = toOfferCard(offer);
+            return (
+              <View key={card.id}>
+                <OfferCard
+                  offer={card}
+                  busy={busy}
+                  onAccept={() => handleAccept(card.id)}
+                  onDecline={() => handleDecline(card.id)}
+                  onCounter={() =>
+                    setCounteringId((current) => (current === card.id ? null : card.id))
+                  }
+                />
+                {counteringId === card.id && (
+                  <View style={[tw`mt-2 rounded-2xl p-3`, { backgroundColor: colors.gray50 }]}>
+                    <Text variant="micro" fontWeight="medium" classN="text-black">
+                      Your counter
+                    </Text>
+                    <TextInput
+                      value={counterAmount}
+                      onChangeText={setCounterAmount}
+                      keyboardType="number-pad"
+                      placeholder={locale.currency}
+                      placeholderTextColor={colors.gray500}
+                      style={[
+                        tw`mt-2 rounded-full px-4 text-black`,
+                        { height: 44, borderWidth: 1, borderColor: colors.gray300 },
+                      ]}
+                    />
+                    <View style={tw`mt-2`}>
+                      <Button
+                        label="Send counter"
+                        size="sm"
+                        loading={counterOffer.isPending}
+                        onPress={() => handleCounter(card.id)}
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
+            );
+          })
+        )}
       </ScrollView>
 
-      <View style={tw`mt-4`}>
+      <View style={tw`mt-3`}>
         <OutlineButton label="Close" onPress={onClose} />
       </View>
     </BottomSheet>
@@ -436,10 +538,10 @@ export function ReviewOffersSheet({
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={tw`flex-row items-center justify-between py-2`}>
-      <Text fontSize={13} classN={`text-[${colors.textSecondary}]`}>
+      <Text variant="caption" classN={`text-[${colors.gray700}]`}>
         {label}
       </Text>
-      <Text fontWeight="bold" fontSize={13} classN="text-black">
+      <Text variant="caption" fontWeight="medium" classN="text-black">
         {value}
       </Text>
     </View>
@@ -469,11 +571,11 @@ export function TaskSummarySheet({
 }: TaskSummarySheetProps) {
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <Text fontWeight="black" fontSize={20} classN="text-black">
+      <Text variant="title" fontWeight="black" classN="text-black">
         Task Summary
       </Text>
 
-      <View style={[tw`mt-4 rounded-2xl px-4 py-1`, { backgroundColor: colors.brandTintSubtle }]}>
+      <View style={[tw`mt-3 rounded-2xl px-4 py-1`, { backgroundColor: colors.primarySurface }]}>
         <SummaryRow label="Category" value={category} />
         <SummaryRow label="Location" value={location} />
         <SummaryRow label="Price" value={price} />
@@ -493,12 +595,11 @@ interface EscrowPaymentSheetProps {
   visible: boolean;
   onClose: () => void;
   onPay: () => void;
+  /** Minor units, as the API stores them. */
   budget: number;
   platformFee: number;
-}
-
-function formatNaira(amount: number) {
-  return `₦${Math.round(amount).toLocaleString('en-US')}`;
+  /** True while the task is being created and escrow funded. */
+  paying?: boolean;
 }
 
 export function EscrowPaymentSheet({
@@ -507,43 +608,48 @@ export function EscrowPaymentSheet({
   onPay,
   budget,
   platformFee,
+  paying = false,
 }: EscrowPaymentSheetProps) {
   const total = budget + platformFee;
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <Text fontWeight="black" fontSize={20} classN="text-black">
+      <Text variant="title" fontWeight="black" classN="text-black">
         Fund escrow to post
       </Text>
-      <Text fontSize={13} classN={`mt-1.5 text-[${colors.textSecondary}]`}>
+      <Text variant="caption" classN={`mt-1.5 text-[${colors.gray700}]`}>
         Held safely until you confirm the task is done. Released only on your approval.
       </Text>
 
-      <View style={tw`mt-4`}>
-        <SummaryRow label="Task Budget" value={formatNaira(budget)} />
-        <SummaryRow label="Platform fee (%)" value={formatNaira(platformFee)} />
+      <View style={tw`mt-3`}>
+        <SummaryRow label="Task Budget" value={money(budget)} />
+        <SummaryRow label="Platform fee" value={money(platformFee)} />
         <View
           style={[
             tw`mt-1 flex-row items-center justify-between pt-3`,
-            { borderTopWidth: 1, borderTopColor: colors.borderLight },
+            { borderTopWidth: 1, borderTopColor: colors.gray200 },
           ]}>
-          <Text fontWeight="bold" fontSize={14} classN="text-black">
+          <Text variant="body" fontWeight="medium" classN="text-black">
             Total
           </Text>
-          <Text fontWeight="bold" fontSize={14} classN="text-black">
-            {formatNaira(total)}
+          <Text variant="body" fontWeight="medium" classN="text-black">
+            {money(total)}
           </Text>
         </View>
       </View>
 
-      <View style={[tw`mt-4 rounded-xl px-3 py-2.5`, { backgroundColor: colors.brandTintSubtle }]}>
-        <Text fontSize={12} classN={`text-[${colors.brandDark}]`}>
+      <View style={[tw`mt-3 rounded-xl px-3 py-2.5`, { backgroundColor: colors.primarySurface }]}>
+        <Text variant="caption" classN={`text-[${colors.primaryDark}]`}>
           Full refund if no Sidekick is matched within 24 hours.
         </Text>
       </View>
 
       <View style={tw`mt-5 gap-3`}>
-        <PrimaryButton label={`Pay ${formatNaira(total)} via Paystack`} onPress={onPay} />
+        <PrimaryButton
+          label={paying ? 'Securing your payment' : `Pay ${money(total)}`}
+          onPress={onPay}
+          loading={paying}
+        />
         <OutlineButton label="Back" onPress={onClose} />
       </View>
     </BottomSheet>
@@ -562,15 +668,15 @@ export function PaymentSuccessSheet({ visible, onBackHome }: PaymentSuccessSheet
         <View
           style={[
             tw`h-16 w-16 items-center justify-center rounded-full`,
-            { backgroundColor: colors.success },
+            { backgroundColor: colors.green },
           ]}>
           <Check size={32} color="white" strokeWidth={3} />
         </View>
 
-        <Text fontWeight="black" fontSize={19} classN="mt-4 text-black">
+        <Text variant="subhead" fontWeight="black" classN="mt-3 text-black">
           Success
         </Text>
-        <Text fontSize={13} classN={`mt-1.5 text-center text-[${colors.textSecondary}]`}>
+        <Text variant="caption" classN={`mt-1.5 text-center text-[${colors.gray700}]`}>
           You have successfully sent money into your Escrow Wallet
         </Text>
 

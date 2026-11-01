@@ -11,8 +11,8 @@ export default function NotFoundScreen() {
       <Stack.Screen options={{ title: 'Oops!' }} />
       <View style={tw`flex-1 items-center justify-center p-5`}>
         <Text style={tw`text-xl font-bold`}>{"This screen doesn't exist."}</Text>
-        <Link href="/" style={tw`mt-4 pt-4`}>
-          <Text style={tw`text-base text-[${colors.textLinkAlt}]`}>Go to home screen!</Text>
+        <Link href="/" style={tw`mt-3 pt-4`}>
+          <Text style={tw`text-base text-[${colors.primary}]`}>Go to home screen!</Text>
         </Link>
       </View>
     </>

@@ -1,11 +1,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronDown } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/UI/Text';
 import { tw } from '@/lib/tw';
 import { colors } from '@/theme/palette';
+import { PressableScale } from '@/components/UI/PressableScale';
 
 type Segment = { text: string; bold?: boolean };
 
@@ -13,6 +14,35 @@ const INTRO =
   'These Terms and Conditions ("Terms") govern your use of the Sidekick mobile platform ("Platform", "Service") operated by Sidekick Technologies Limited ("Sidekick", "we", "us", "our"), a company incorporated under the laws of the Federal Republic of Nigeria. By creating an account or using the Platform in any capacity, you agree to be bound by these Terms in full. If you do not agree with any part of these Terms, you must not register or use the Platform.';
 
 const SECTIONS: { title: string; intro: Segment[]; bullets: Segment[][] }[] = [
+  {
+    title: 'Eligibility & Age',
+    intro: [
+      { text: 'Sidekick is for adults only. By registering, you confirm that ' },
+      { text: 'you are 18 years of age or older', bold: true },
+      { text: '. This means:' },
+    ],
+    bullets: [
+      [
+        { text: 'You must be ' },
+        { text: '18 or over', bold: true },
+        {
+          text: ' to post tasks, accept work, or hold funds. Accounts found to belong to under-18s are closed and any held balance is returned to its source.',
+        },
+      ],
+      [
+        { text: 'The date of birth you give must be ' },
+        { text: 'accurate', bold: true },
+        {
+          text: '. It is checked against your ID when you verify your account, and a mismatch will fail verification.',
+        },
+      ],
+      [
+        {
+          text: 'Tasks are carried out in person. You are responsible for meeting any further legal age requirement a particular task involves.',
+        },
+      ],
+    ],
+  },
   {
     title: 'Escrow & Payment Policy',
     intro: [
@@ -163,15 +193,15 @@ function RichText({
   classN?: string;
 }) {
   return (
-    <Text fontSize={13} classN={`${classN ?? ''} text-[${colors.textBody}]`.trim()}>
+    <Text variant="caption" classN={`${classN ?? ''} text-[${colors.gray800}]`.trim()}>
       {prefix}
       {segments.map((segment, i) =>
         segment.bold ? (
-          <Text key={i} fontWeight="bold" fontSize={13} classN="text-black">
+          <Text variant="caption" fontWeight="medium" key={i} classN="text-black">
             {segment.text}
           </Text>
         ) : (
-          <Text key={i} fontSize={13} classN={`text-[${colors.textBody}]`}>
+          <Text variant="caption" key={i} classN={`text-[${colors.gray800}]`}>
             {segment.text}
           </Text>
         )
@@ -206,27 +236,27 @@ export default function Terms() {
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
       <View style={tw`flex-1 px-4`}>
-        <Text fontWeight="bold" fontSize={24} classN="mt-3 text-black">
+        <Text variant="headline" classN="mt-2 text-black">
           Terms & Conditions
         </Text>
-        <Text fontSize={14} classN={`mt-1 text-[${colors.textSubtle}]`}>
+        <Text variant="body" classN={`mt-1 text-[${colors.gray400}]`}>
           Before you create an account, please read and accept our Terms and Conditions
         </Text>
 
         <ScrollView
-          style={tw`mt-4`}
+          style={tw`mt-3`}
           contentContainerStyle={{ paddingBottom: 16 }}
           showsVerticalScrollIndicator={false}>
-          <Text fontSize={13} classN="text-black">
+          <Text variant="caption" classN="text-black">
             Effective Date: 1 January 2025
           </Text>
-          <Text fontSize={13} classN="text-black">
+          <Text variant="caption" classN="text-black">
             Governing Law: Federal Republic of Nigeria
           </Text>
 
-          <View style={[tw`mt-4 h-px`, { backgroundColor: colors.borderDivider }]} />
+          <View style={[tw`mt-3 h-px`, { backgroundColor: colors.gray200 }]} />
 
-          <Text fontSize={13} classN={`mt-4 text-[${colors.textBody}]`}>
+          <Text variant="caption" classN={`mt-3 text-[${colors.gray800}]`}>
             {INTRO}
           </Text>
 
@@ -238,77 +268,83 @@ export default function Terms() {
                 <View
                   key={section.title}
                   style={{
-                    borderColor: colors.brandBorder,
+                    borderColor: colors.primaryMuted,
                     ...tw`rounded-3xl border px-4 py-3`,
                   }}>
-                  <Pressable onPress={() => toggleSection(index)} style={tw`flex-row items-center`}>
+                  <PressableScale
+                    onPress={() => toggleSection(index)}
+                    style={tw`flex-row items-center`}>
                     <View
                       style={{
-                        ...tw`h-7 w-7 items-center bg-[${colors.borderLight}] justify-center rounded-full`,
+                        ...tw`h-7 w-7 items-center bg-[${colors.gray200}] justify-center rounded-full`,
                       }}>
                       <Text fontWeight="bold" fontSize={11.11} classN={`text-black`}>
                         {index + 1}
                       </Text>
                     </View>
                     <View style={tw`ml-3 flex-1`}>
-                      <Text fontWeight="bold" fontSize={15} classN="text-black">
+                      <Text variant="body" fontWeight="medium" classN="text-black">
                         {section.title}
                       </Text>
                       {isAccepted ? (
                         <View
                           style={[
                             tw`mt-1 self-start rounded-full px-2 py-0.5`,
-                            { backgroundColor: colors.brandTint },
+                            { backgroundColor: colors.primaryTint },
                           ]}>
-                          <Text fontSize={11} classN={`text-[${colors.brand}]`}>
+                          <Text
+                            variant="micro"
+                            fontWeight="normal"
+                            classN={`text-[${colors.primary}]`}>
                             Accepted
                           </Text>
                         </View>
                       ) : (
-                        <Text fontSize={12} classN={`text-[${colors.textMutedAlt}]`}>
+                        <Text variant="caption" classN={`text-[${colors.gray600}]`}>
                           Tap to read • Required
                         </Text>
                       )}
                     </View>
                     <ChevronDown
                       size={20}
-                      color={colors.textMutedAlt}
+                      color={colors.gray600}
                       style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
                     />
-                  </Pressable>
+                  </PressableScale>
 
                   {isOpen && (
-                    <View style={tw`mt-3`}>
+                    <View style={tw`mt-2`}>
                       <RichText segments={section.intro} />
                       {section.bullets.map((segments, i) => (
                         <RichText key={i} segments={segments} prefix="—  " classN="mt-2" />
                       ))}
 
                       {!isAccepted && (
-                        <View style={tw`mt-4 flex-row gap-3`}>
-                          <Pressable
+                        <View style={tw`mt-3 flex-row gap-3`}>
+                          <PressableScale
                             onPress={() => setOpenIndex(null)}
                             style={{
-                              borderColor: colors.borderStrong,
+                              borderColor: colors.gray300,
                               ...tw`flex-1 items-center justify-center rounded-full border py-3`,
                             }}>
-                            <Text fontWeight="medium" fontSize={14} classN="text-black">
+                            <Text variant="body" fontWeight="medium" classN="text-black">
                               Cancel
                             </Text>
-                          </Pressable>
-                          <Pressable
+                          </PressableScale>
+                          <PressableScale
                             onPress={() => acceptSection(index)}
                             style={{
-                              borderColor: colors.brand,
+                              borderColor: colors.primary,
                               ...tw`flex-1 items-center justify-center rounded-full border py-3`,
                             }}>
                             <Text
+                              variant="body"
                               fontWeight="medium"
-                              fontSize={14}
-                              classN={`text-[${colors.brand}]`}>
+
+                              classN={`text-[${colors.primary}]`}>
                               I Agree
                             </Text>
-                          </Pressable>
+                          </PressableScale>
                         </View>
                       )}
                     </View>
@@ -319,20 +355,21 @@ export default function Terms() {
           </View>
         </ScrollView>
 
-        <Pressable
+        <PressableScale
           disabled={!allAccepted}
           onPress={handleCreateAccount}
           style={{
-            backgroundColor: allAccepted ? colors.brand : colors.brandDisabled,
+            backgroundColor: allAccepted ? colors.primary : colors.primaryDisabled,
             ...tw`mb-4 items-center justify-center rounded-full py-4`,
           }}>
           <Text
+            variant="subhead"
             fontWeight="bold"
-            fontSize={16}
+
             classN={allAccepted ? 'text-white' : 'text-white/70'}>
             Create Account
           </Text>
-        </Pressable>
+        </PressableScale>
       </View>
     </SafeAreaView>
   );

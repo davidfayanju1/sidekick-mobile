@@ -15,17 +15,9 @@ import Text from '@/components/UI/Text';
 import { tw, twColor } from '@/lib/tw';
 import { useColorScheme } from '@/lib/useColorScheme';
 import { colors } from '@/theme/palette';
+import { elevation } from '@/theme/elevation';
 
-export const ACCENT_TEAL = colors.brand;
-export const CATEGORY_COLOR = colors.dangerText;
-
-export const CARD_SHADOW = {
-  shadowColor: colors.iconPrimary,
-  shadowOpacity: 0.06,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 2 },
-  elevation: 2,
-};
+export const CARD_SHADOW = elevation.md;
 
 export type TaskStatus = 'matched' | 'in_progress' | 'offers' | 'scheduled' | 'dispute';
 
@@ -65,11 +57,11 @@ export type BrowsableTask = {
 };
 
 export const STATUS_STYLES: Record<TaskStatus, { bg: string; text: string }> = {
-  matched: { bg: colors.brandTintAlt, text: ACCENT_TEAL },
-  in_progress: { bg: colors.pendingBg, text: colors.pendingText },
-  offers: { bg: colors.successBg, text: colors.success },
-  scheduled: { bg: colors.scheduledBg, text: colors.scheduledText },
-  dispute: { bg: colors.disputeBg, text: colors.dangerText },
+  matched: { bg: colors.primaryTint, text: colors.primary },
+  in_progress: { bg: colors.orangeTint, text: colors.orangeDark },
+  offers: { bg: colors.greenTint, text: colors.green },
+  scheduled: { bg: colors.primaryTint, text: colors.primary },
+  dispute: { bg: colors.dangerTint, text: colors.danger },
 };
 
 export const STEPS = ['Posted', 'Matched', 'In Progress', 'Confirm', 'Payment'];
@@ -78,15 +70,15 @@ export type CategoryMeta = { color: string; icon: LucideIcon };
 
 export const QUICK_CATEGORIES: { name: string; label: string; color: string; icon: LucideIcon }[] =
   [
-    { name: 'Cleaning', label: 'Cleaning', color: ACCENT_TEAL, icon: BrushCleaning },
-    { name: 'Delivery', label: 'Delivery', color: CATEGORY_COLOR, icon: Package },
-    { name: 'Tech Help', label: 'Tech Help', color: colors.scheduledText, icon: Laptop },
-    { name: 'Moving & Assembly', label: 'Moving', color: colors.pendingText, icon: Truck },
-    { name: 'Handyman', label: 'Handyman', color: colors.accentPurple, icon: Hammer },
-    { name: 'Personal Errands', label: 'Errands', color: colors.success, icon: ShoppingBag },
+    { name: 'Cleaning', label: 'Cleaning', color: colors.primary, icon: BrushCleaning },
+    { name: 'Delivery', label: 'Delivery', color: colors.danger, icon: Package },
+    { name: 'Tech Help', label: 'Tech Help', color: colors.primary, icon: Laptop },
+    { name: 'Moving & Assembly', label: 'Moving', color: colors.orangeDark, icon: Truck },
+    { name: 'Handyman', label: 'Handyman', color: colors.primary, icon: Hammer },
+    { name: 'Personal Errands', label: 'Errands', color: colors.green, icon: ShoppingBag },
   ];
 
-const DEFAULT_CATEGORY_META: CategoryMeta = { color: CATEGORY_COLOR, icon: Sparkles };
+const DEFAULT_CATEGORY_META: CategoryMeta = { color: colors.danger, icon: Sparkles };
 
 const CATEGORY_META: Record<string, CategoryMeta> = QUICK_CATEGORIES.reduce(
   (acc, { name, color, icon }) => ({ ...acc, [name]: { color, icon } }),
@@ -136,7 +128,7 @@ export function StatusPill({ status, label }: { status: TaskStatus; label: strin
   const { bg, text } = STATUS_STYLES[status];
   return (
     <View style={[tw`rounded-full px-2.5 py-1`, { backgroundColor: bg }]}>
-      <Text fontSize={11} classN={`text-[${text}]`}>
+      <Text variant="micro" fontWeight="normal" classN={`text-[${text}]`}>
         {label}
       </Text>
     </View>
@@ -148,7 +140,7 @@ export function ProgressTracker({ currentStep }: { currentStep: number }) {
   const muted = twColor(systemColors.mutedForeground);
 
   return (
-    <View style={tw`mt-3`}>
+    <View style={tw`mt-2`}>
       <View style={tw`flex-row items-center`}>
         {STEPS.map((_, index) => (
           <React.Fragment key={index}>
@@ -156,11 +148,11 @@ export function ProgressTracker({ currentStep }: { currentStep: number }) {
               style={[
                 tw`h-5 w-5 items-center justify-center rounded-full`,
                 index < currentStep
-                  ? { backgroundColor: ACCENT_TEAL }
+                  ? { backgroundColor: colors.primary }
                   : index === currentStep
                     ? {
                         borderWidth: 2,
-                        borderColor: ACCENT_TEAL,
+                        borderColor: colors.primary,
                         backgroundColor: systemColors.card,
                       }
                     : {
@@ -172,14 +164,14 @@ export function ProgressTracker({ currentStep }: { currentStep: number }) {
               {index < currentStep ? (
                 <View style={tw`h-1.5 w-1.5 rounded-full bg-white`} />
               ) : index === currentStep ? (
-                <View style={[tw`h-1.5 w-1.5 rounded-full`, { backgroundColor: ACCENT_TEAL }]} />
+                <View style={[tw`h-1.5 w-1.5 rounded-full`, { backgroundColor: colors.primary }]} />
               ) : null}
             </View>
             {index < STEPS.length - 1 && (
               <View
                 style={[
                   tw`h-px flex-1`,
-                  { backgroundColor: index < currentStep ? ACCENT_TEAL : systemColors.grey4 },
+                  { backgroundColor: index < currentStep ? colors.primary : systemColors.grey4 },
                 ]}
               />
             )}
@@ -188,7 +180,11 @@ export function ProgressTracker({ currentStep }: { currentStep: number }) {
       </View>
       <View style={tw`mt-1 flex-row`}>
         {STEPS.map((label) => (
-          <Text key={label} fontSize={9} classN={`w-11 text-center text-[${muted}]`}>
+          <Text
+            variant="micro"
+            fontWeight="normal"
+            key={label}
+            classN={`w-11 text-center text-[${muted}]`}>
             {label}
           </Text>
         ))}

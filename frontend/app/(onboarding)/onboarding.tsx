@@ -71,10 +71,10 @@ function Slide({
         </Animated.View>
 
         <Animated.View style={contentStyle}>
-          <Text fontWeight="bold" fontSize={26} classN="text-black">
+          <Text variant="headline" classN="text-black">
             {slide.title}
           </Text>
-          <Text fontSize={14} classN={`mt-3 text-[${colors.textMuted}]`}>
+          <Text variant="body" classN={`mt-2 text-[${colors.gray500}]`}>
             {slide.subtitle}
           </Text>
         </Animated.View>
@@ -95,7 +95,7 @@ function Dot({ index, scrollX }: { index: number; scrollX: SharedValue<number> }
     return { width, opacity };
   });
   return (
-    <Animated.View style={[tw`h-1.5 rounded-full`, { backgroundColor: colors.brand }, style]} />
+    <Animated.View style={[tw`h-1.5 rounded-full`, { backgroundColor: colors.primary }, style]} />
   );
 }
 
@@ -117,7 +117,7 @@ function SkipButton({
       pointerEvents={interactive ? 'auto' : 'none'}
       style={[tw`items-end px-6 pt-2`, style]}>
       <TouchableOpacity onPress={onPress} hitSlop={8} activeOpacity={0.6}>
-        <Text fontSize={15} classN={`text-[${colors.textMuted}]`}>
+        <Text variant="body" classN={`text-[${colors.gray500}]`}>
           Skip
         </Text>
       </TouchableOpacity>
@@ -184,9 +184,9 @@ export default function Onboarding() {
           activeOpacity={0.8}
           style={[
             tw`items-center justify-center rounded-full py-4`,
-            { backgroundColor: colors.brand },
+            { backgroundColor: colors.primary },
           ]}>
-          <Text fontWeight="bold" fontSize={16} classN="text-white">
+          <Text variant="subhead" fontWeight="bold" classN="text-white">
             {isLastSlide ? 'Get Started' : 'Continue'}
           </Text>
         </TouchableOpacity>
